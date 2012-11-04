@@ -1,19 +1,19 @@
-
-
-
-	
-#Language description
-
+#HTTPScript
+##Language Reference
+###Basic syntax
 Comments are Lisp style, e.g. they are lines starting with -- and ending with \n. 
 The statement delimiter is \n, except inside a multiline JSON literal.
 Whitespace is never semantic, and is ignored everywhere except inside strings. 
 By convention, httpscript source files are typeset in a columnar format that (vaguely and accidentally) resembles assembly. 
 
+##Fundamental concepts
 The central concept is the stack. There can be stacks of stacks, but for now just think about the main stack, which is pre-loaded with the values of the parameters passed to the function (and nothing else). The earliest (bottommost) element is referred to by the special symbol ^ (nm. regexp '^') and the latest (uppermost) element is referred to as 0. (I.e., it's a 0-based array.)
 
 Stack elements may also be named with labels, so that they may be referred to directly (i.e. without pushing and popping.)
 
-These labels are reactive stack indices. A 'reactive stack index' is an index to a particular entry that is incremented when intervening elements are added to the stack, and decremented when they are removed. That way, it always points to the same entry. They may also be used to specify ranges (and eventually slices). They may also be used for arithmetic, so e.g. 'label_1 + 1' is the label for the element immediately prior to label_1 on the stack. Finally, the value at a particular label is accessed with a prefixed tilde, i.e. ~label_1. 
+These labels are _Reactive Stack Indices_. A 'reactive stack index' is an index to a particular entry that is incremented when intervening elements are added to the stack, and decremented when they are removed. That way, it always points to the same entry. They may also be used to specify ranges. They may also be used for arithmetic, so e.g. '@(#label\_1 + 1)' pulls out the value of the element immediately prior to the stack element labelled by label\_1. 
+
+@ converts a number into a stack indexFIXME
 
 Labels are declared by suffixing the first word of a statement with the equal sign:
 
