@@ -1,5 +1,3 @@
-
-
 #Basic syntax 
 
 ##Comments
@@ -15,7 +13,8 @@ Whitespace (including newlines and carriage returns) is otherwise ignored.
 
 All non-whitespace unicode characters are valid in a token. 
 
-Characters which are in the set of operator symbols (TODO define) are treated specially in two respects. A word literal may be composed entirely of non-operator characters or entirely of operator characters, but not both. 
+Characters which are in the set of operator symbols (TODO define) are treated specially in two respects. A word literal may be composed entirely of non-operator characters or entirely of operator characters, but not both. Almost all mathematical operators and symbols from unicode (including letterlike symbols? TODO decide)
+
 
 If there is an operator adjacent to a non-operator, whitespace between the two is implied, and may be omitted. 
 
@@ -48,7 +47,10 @@ e.g.
 ##Stack
 
 
-CHANGED; TODO think about it
+The index '0' is 'whatever results from the current operation'. 
+(Thus 'foo= ...' has 'foo' accessible from within the ..., with value 0.)
+
+
 The latest value is at index `1``.
 The earliest value is at index `-1`. The second earliest at -2...
 `\_` pops the value at index 1.
@@ -71,11 +73,10 @@ foo= 1   -- label foo now points to the value at stack index 0, which is 1
       
          -- foo now points to stack index 1, which still contains the value 1
 
-Redeclaring a label changes its value.
+Redeclaring a label leaves the original value on the stack (orphaned)
 
-There is no way of undeclaring a label. 
+A label can only be undeclared by removing the value it points to from the stack. 
 
-More locally-scoped labels occlude more globally-scoped labels.
 
 A label may not contain operator characters or whitespace.
 If a word literal is recognized as a label, it is expanded to the value pointed to by that label. 
@@ -126,7 +127,6 @@ print @1  -- user sees "foo!"
 
 Note the difference between @ and $. While similar, $ creates a new anonymous label. Thus #$1 always returns 1, whereas #@1 causes a runtime exception unless @1 happens to be a map or array. (# returns the length of the array in this context.) 
 
-
 #Subroutines
 
 A subroutine is defined with do/end.
@@ -135,7 +135,7 @@ foo= do
       -- some stuff
      end
 
-A subroutine always pops  _ as its only argument, and returns the value \_.
+A subroutine always pops  _ as its only argument, and returns the value _.
 
 Every subroutine executes in a private stack. This stack is populated with its
 sole argument. When it returns a copy of whatever was in the subroutine's _ is
@@ -151,8 +151,6 @@ foo= do
       -- some stuff
      end
      now _ 
-
-
 
 
 
@@ -187,8 +185,15 @@ From the above example, 'unhoist' is self-explanatory. dehoist is equivalent to 
 
 #Closures
 
-Closures are implemented by passing subroutines a JSON object containing a copy of the entire context. 
 
-TODO figure out syntax.
+TODO 
+
+Tentatively, something like
+
+foo= func ... end
+
+The cool thing about closures, of course,  is that from within a closure one may refer to labels that were defined in the context of the closure's declaration. 
+
+Closures are just subroutines whose -1th stack element is a JSON object representing the stack of its declaration context. 
 
 
