@@ -1,56 +1,61 @@
-/* Core */ 
+(*******************************************************
+ *  Hanoi BNF -- core language						   * 
+ *******************************************************) 
 
-<delimiter>				::= ; | \n
-<line>					::= (<line-expr> <delimiter>)+ 
-<line-expr>				::= <lambda> | <value> | <monad> | e 
-<lambda>				::= <when> | <let>
-<when>					::= when <expr> | when between <expr>  | whenever <expr>
-<let>					::= <symbol> \<\- <expr> | let <symbol> be <expr> | <symbol> = (<monad>)
-<symbol>				::= (<alnum>*) | <opchar>+
-<atom>					::= <number> | <character> | <boolean> | <string> | <regex> | <xpath> 
-<monad>					::= <expr> (& <expr>)+ | \( <monad> \) 
-<expr>					::= <monad> | <value>
-<value>					::= <implicit-force> | <explicit-force> 
-<explicit-force>		::= <explicit-force-once> | <explicit-force-until-fail>
-<explicit-force-once>	::= <expr> 
-<explicit-force-until-fail>	::= <expr> !!
-<implicit-force>		::= <symbol> | <keyword> | <atom> | <monad>
-<keyword>				::= <io>  | <stack> 
-<stack>					::= <tip> | <tail> | <depth>
-<depth>					::= # 
-<tip>					::= <shift> | <unshift>
-<tail>					::= <push> | <pop> | <drop> | <swap>
-<io>					::= <in> | <out> 
-<in>					::= <in-pop> | <in-peek> | <in-until-fail>
-<in-pop>				::= < 
-<in-peek>				::= <<   (* impl. internal index decr w/ reset next <in-pop> *)
-<in-until-fail>			::= <* 
-<out>					::= <out-push> | <out-until-fail> 
-<out-push>				::= >
-<out-until-fail>		::= *>
-<drop>					::= <drop-once> | <drop-until-fail>
-<drop-once>				::= ~
-<drop-until-fail>		::= *~
-<pop>					::= _  
-<call-with-context>		::= ? <expr>
-<force>					::= !
-<apply-expr>			::= <strainer> | <apply-expr-once> | <apply-expr-until-fail>
-<apply-expr-once>		::= : <expr>
-<apply-expr-until-fail>	::= :: <expr>
-<strainer>				::= <strain-out-symbols> | <strain-out-stack> 
-<strain-out-symbols>	::= @ <expr>
-<strain-out-stack>		::= % <expr>
+(**** GRAMMAR ****)
+<expression>			::= <statement>+ 
+<statement>				::= <declaration> | <thunk> | <forcing> |  e 
+<declaration>			::= <when> | <let>
+
+(* grammar for thunking *)
+<thunk>					::= <grouped-thunk> | <concatted-thunk> | <composed-thunk> | <lvalue>
+<grouped-thunk>			::= <open-group-oper> <expression>  <close-group-oper>
+<concatted-thunk>		::= <statement> (<concat-oper> <statement>)+ 
+<composed-thunk>		::= <composition> (* simplify? see below *)
+
+
+(* grammar for values, aka forced entities, aka push values *)
+<forcing>				::= <bare-force> | <force-with-args> | <implied-force>
+<implied-force>			::= <operation> | <atom> 
+<operation>				::= <io-op> | <stack-op>
+<bare-force>			::= <thunk> <force-bare-oper>
+<force-with-args>		::= <thunk> <force-args-oper>  <thunk>  (* second thunk == args *)
+
+(* grammar for operations (which are a kind of forced entity, as they imply forcing *)
+<stack-op>				::= <pop> | <drop> | <swap> | <depth> (* recall no push *)
+<io-op>					::= <in> | <out> 
+
+(* grammar for composition (does not imply forcing, and thus returns a thunk*) *)
+<composition> 			::=	<vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp>
+<vanilla-comp>			::= <thunk> <vanilla-comp-oper> <thunk>
+(* apply but filter out symbol table, leaving only stack *)
+<array-comp>			::= <thunk> <array-comp-oper> <thunk>
+(* apply but filter out stack, leaving only symbol table *)
+<hash-comp>				::= <thunk> <hash-comp-oper>  <thunk> 
+(* a thunk used for filtering may have special symbols 
+ ... and _ and *. The first matches any unnamed parameter 
+(i.e. something put on the stack.) *)
+<filter-comp>			::= <thunk> <filter-comp-oper>  <thunk> 
+(*The second matches any unresolved named parameters ('all 
+other parameters must satisfy this'). The last matches any
+'all parameters must at least match the following'. *)
+
+(**** SYNTAX ****) 
+
+(* syntax for literals *) 
+<atom>					::= <number> | <character> | <boolean> | <string> 
+<string>				::= "((<non-control-char>)*)" | '((<non-control-char>){2,})'
 <character>				::= <quoted-char> |  <escaped-char>
 <quoted-char>			::= '<non-control-char>' 
+<non-control-char>		::= /* FIXME the range of all characters that are not control characters */ 
 <escaped-char>			::= <escaped-delimiter> | <escaped-utf-8> | <escaped-unicode> | <escaped-xml>
 <escaped-delimiter>		::= \\n | \\r | \\0 
 <escaped-utf-8>			::= (\\(<octa>{3})){2}
 <escaped-unicode>		::= U\+(<hexa>{4})
 <escaped-xml> 			::= &#(<deca>)+;
-<opchar>				::= /* all unicode punctuation non-letter-like symbols except for _ and - */
-<non-control-char>		::= /* the set of all characters that are not control characters */ 
-<alnum>					::= (<alpha>|<deca>|_|-)
-<char>					::= /* any unicode character */ 
+<alnum>					::= (<alpha>|<deca>|-)
+
+(* syntax for numbers *) 
 <number>				::= <decimal> | <hexadecimal> | <octal>
 <octal>					::= (<octa>+)
 <decimal>				::= <integer> | <float> 
@@ -59,7 +64,43 @@
 <positive>				::= <deca>+ 
 <negative>				::= -<positive> 
 <hexadecimal>			::= 0x(<hexa>+)
+
+(* regular expressions for character classes*)
 <deca>					::= [0-9]
 <hexa>					::= [A-Fa-f0-9]
 <octa>					::= [0-7]
 <alpha>					::= [A-Za-z]
+<reserved>				::= [$#_]
+<opchar>				::= /* FIXME all unicode punctuation non-letter-like symbols (including _ but not -) */
+
+(* syntax for assignments *)
+<when>					::= when <thunk> | when between <thunk> | whenever <thunk>
+<lvalue>				::= (<alnum>*) | <opchar>+ 
+<rvalue>				::= <thunk> | <forcing> 
+<let>					::= <lvalue> = <rvalue>
+
+(* syntax for thunking *) 
+<open-group-oper>		::= (
+<close-group-oper>		::= )
+<concat-oper>			::= &
+
+
+(* syntax for forcing *)
+<force-bare-oper>		::= ! 
+<force-args-oper>		::= ?
+
+(* syntax for stack operations *)
+<pop>					::= _ 
+<swap>					::= ^
+<drop>					::= ~
+<depth>					::= #
+
+(* syntax for I/O operations *)
+<in>					::= \< 
+<out>					::= \> 
+
+(* syntax for composition *) 
+<vanilla-comp-oper>		::= :
+<array-comp-oper>		::= @
+<hash-comp-oper>		::= %
+<filter-comp-oper>		::= |
