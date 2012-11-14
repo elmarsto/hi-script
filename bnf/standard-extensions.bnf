@@ -1,0 +1,73 @@
+/* standard extent handlers */ 
+
+
+<array>  {
+			 begin with '['
+			 end with ']'
+		     multiline
+			 not escaped
+		  }
+
+<object>  {
+			 begin with '{'
+			 end with '}' 
+			 multiline
+			 not escaped
+		  }
+
+
+<regex> { 
+			begin with '/'
+			end with '/'
+			escaped with '\'
+			not multiline
+}
+
+<xpath> { 
+			begin with '|'
+			end with '|'
+			escaped with '\'
+			not multiline
+}
+
+
+<url> { 
+			begin with <proto>:
+			end with !, ?, #, or newline
+			not multiline
+
+}
+
+<heredoc> { 
+			begin with <<(\w+)$
+			end with ^\1
+			multiline
+}	
+
+<xml-tree> 	{ 	
+			begin with <xml-open-tag>
+			end with <xml-close-tag>
+			}
+
+<xml-attribute> { TODO } 
+
+<xml-atom>  {
+			begin with '<(\s?)(\w+)'
+			end with '/>' 
+			multiline
+}
+
+<xml-open-tag> {
+			begin with '<(\s?)(\w+)'
+			end with '>'
+}
+
+<xml-close-tag> {
+			begin with '<(\s?)/(\s?)(\w+)'
+			end with '>'
+}
+
+<xml> ::= <xml-tree> | <xml-atom> 
+
+
+	

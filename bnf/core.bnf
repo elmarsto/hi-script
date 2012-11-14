@@ -29,16 +29,19 @@
 <concatted-thunk>		::= <statement>, {<concat-oper>, <statement>} ;
 <composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp>;
 <vanilla-comp>			::= <thunk>, <vanilla-comp-oper>, <thunk>;
-<array-comp>			::= <thunk>, <array-comp-oper>, <thunk>;
-<hash-comp>				::= <thunk>, <hash-comp-oper>, <thunk>;
-<filter-comp>			::= <thunk>, <filter-comp-oper>, <thunk>;
-;
+<array-comp>			::= <thunk>, <array-comp-oper>  , <thunk>;
+<hash-comp>				::= <thunk>, <hash-comp-oper>   , <thunk>;
+<filter-comp>			::= <thunk>, <filter-comp-oper> , <thunk>;
+
+
 (* grammar for values, aka forced entities, aka push values, aka computation results, aka literals *)
 <forcing>				::= <bare-force> | <force-with-args> | <implied-force>;
 <bare-force>			::= <thunk>, <force-bare-oper>;
 <force-with-args>		::= <thunk>, <force-args-oper>, <thunk>;  (* second thunk == args *)
 <implied-force>			::= <operation> | <atom>;
+
 <atom>					::= <number> | <character> | <boolean> | <string>;
+
 <operation>				::= <io-op> | <stack-op>;
 <stack-op>				::= <pop> | <drop> | <swap> | <depth>; (* recall no push *)
 <io-op>					::= <in> | <out>;
@@ -48,7 +51,9 @@
 
 (* for strings *) 
 <string>				::= <double-quote-lit>,[<any-unicode-char-except-2quote>],<double-quote-lit>  |
-							<single-quote-lit>,<any-unicode-char-except-1quote>,<any-unicode-char-except-1quote>, {<any-unicode-char-except-1quote>},<single-quote-lit>;
+							<single-quote-lit>,<any-unicode-char-except-1quote>,
+											   <any-unicode-char-except-1quote>, 
+ 											  {<any-unicode-char-except-1quote>},<single-quote-lit>;
 
 
 (* for single characters *) 
@@ -56,7 +61,6 @@
 <character>				::= <single-quote-lit>,<any-unicode-char-except-1quote>,<single-quote-lit>	| 
 							<escape-char>,<escaped-char-code>    				|	
 							<unicode-escape-prefix>,<hexa>,<hexa>,<hexa>,<hexa>	| 
-							<xml-escape-prefix> <deca>+	<xml-escape-suffix>
 
 							(* notice dodge of ambiguity: the literal /'x'/ might be a char or a string. So mandate strings with single quotes must be at least 2 chars long *)
 
@@ -74,7 +78,10 @@
 
 (****LITERALS****)
 
-(* for assignment *)
+(* basics *) 
+<inline-delimiter-lit>	::=";";
+
+(* for declarations *)
 <when-lit>				::= "when";
 <whenever-lit>			::= "whenever";
 <between-lit>			::= "between";
@@ -82,12 +89,18 @@
 <assignment-oper>		::= "=";
 
 
-(* for thunking *) 
+(* for thunks and thunking *) 
 <open-group-oper>		::= "(";
 <close-group-oper>		::= ")";
 <concat-oper>			::= "&";
 
-(* for forcing *)
+(* for composition *) 
+<vanilla-comp-oper>		::= ":";
+<array-comp-oper>		::= "@";
+<hash-comp-oper>		::= "%";
+<filter-comp-oper>		::= "|";
+
+(* for forcing and values *)
 <force-bare-oper>		::= "!";
 <force-args-oper>		::= "?";
 
@@ -101,18 +114,11 @@
 <in>					::= "<";
 <out>					::= ">";
 
-(* for composition *) 
-<vanilla-comp-oper>		::= ":";
-<array-comp-oper>		::= "@";
-<hash-comp-oper>		::= "%";
-<filter-comp-oper>		::= "|";
 
 (* for strings and characters *)
 <escape-char>			::="\";
-<escaped-char-code>		::="n" | "r" | "0" ;
+<escaped-char-code>		::="n" | "r" | "0" ; (* exhaustive list of valid codes: \n, \r, \0 *)
 <unicode-escape-prefix>	::="U+";
-<xml-escape-prefix> 	::="&#";
-<xml-escape-suffix> 	::=";";
 <single-quote-lit>		::="'";
 <double-quote-lit>		::='"';
 
@@ -131,6 +137,5 @@
 <alpha>					::=/[A-Za-z]/;
 <alnum>					::=/[A-Za-z0-9/;
 <oper>					::=(* FIXME *) ;
-<inline-delimiter-lit>	::=";";
 <any-unicode-char-except-1quote> ::= /[^"]/;
 <any-unicode-char-except-2quote> ::= /[^']/;
