@@ -3,104 +3,120 @@
  *******************************************************) 
 
 (**** GRAMMAR ****)
+
+(*in the beginnning....*)
 <expression>			::= <statement>+ 
 <statement>				::= <declaration> | <thunk> | <forcing> |  e 
-<declaration>			::= <when> | <let>
 
-(* grammar for thunking *)
+
+(*grammar for binding values*)
+<declaration>			::= <when> | <let>
+<when>					::= <when-lit> <thunk> <do-lit> <thunk> | 
+							<when-lit> <between-lit> <thunk> <do-lit> <thunk> | 
+							<whenever-lit> <thunk> <do-lit> <thunk>
+<let>					::= <lvalue> <assignment-oper> <rvalue>
+<lvalue>				::= <lvalue-first-char>(<lvalue-later-char>*) | 
+<rvalue>				::= <thunk> | <forcing> 
+
+(* grammar for thunking, aka creating deferred computations (promises) *)
 <thunk>					::= <grouped-thunk> | <concatted-thunk> | <composed-thunk> | <lvalue>
 <grouped-thunk>			::= <open-group-oper> <expression>  <close-group-oper>
 <concatted-thunk>		::= <statement> (<concat-oper> <statement>)+ 
-<composed-thunk>		::= <composition> (* simplify? see below *)
+<composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp>
+<vanilla-comp>			::= <thunk> <vanilla-comp-oper> <thunk>
+<array-comp>			::= <thunk> <array-comp-oper> <thunk>
+<hash-comp>				::= <thunk> <hash-comp-oper>  <thunk> 
+<filter-comp>			::= <thunk> <filter-comp-oper>  <thunk> 
 
-
-(* grammar for values, aka forced entities, aka push values *)
+(* grammar for values, aka forced entities, aka push values, aka computation results, aka literals *)
 <forcing>				::= <bare-force> | <force-with-args> | <implied-force>
-<implied-force>			::= <operation> | <atom> 
-<operation>				::= <io-op> | <stack-op>
 <bare-force>			::= <thunk> <force-bare-oper>
 <force-with-args>		::= <thunk> <force-args-oper>  <thunk>  (* second thunk == args *)
-
-(* grammar for operations (which are a kind of forced entity, as they imply forcing *)
+<implied-force>			::= <operation> | <atom> 
+<atom>					::= <number> | <character> | <boolean> | <string> 
+<operation>				::= <io-op> | <stack-op>
 <stack-op>				::= <pop> | <drop> | <swap> | <depth> (* recall no push *)
 <io-op>					::= <in> | <out> 
 
-(* grammar for composition (does not imply forcing, and thus returns a thunk*) *)
-<composition> 			::=	<vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp>
-<vanilla-comp>			::= <thunk> <vanilla-comp-oper> <thunk>
-(* apply but filter out symbol table, leaving only stack *)
-<array-comp>			::= <thunk> <array-comp-oper> <thunk>
-(* apply but filter out stack, leaving only symbol table *)
-<hash-comp>				::= <thunk> <hash-comp-oper>  <thunk> 
-(* a thunk used for filtering may have special symbols 
- ... and _ and *. The first matches any unnamed parameter 
-(i.e. something put on the stack.) *)
-<filter-comp>			::= <thunk> <filter-comp-oper>  <thunk> 
-(*The second matches any unresolved named parameters ('all 
-other parameters must satisfy this'). The last matches any
-'all parameters must at least match the following'. *)
 
 (**** SYNTAX ****) 
 
 (* syntax for literals *) 
-<atom>					::= <number> | <character> | <boolean> | <string> 
-<string>				::= "((<non-control-char>)*)" | '((<non-control-char>){2,})'
-<character>				::= <quoted-char> |  <escaped-char>
-<quoted-char>			::= '<non-control-char>' 
-<non-control-char>		::= /* FIXME the range of all characters that are not control characters */ 
-<escaped-char>			::= <escaped-delimiter> | <escaped-utf-8> | <escaped-unicode> | <escaped-xml>
-<escaped-delimiter>		::= \\n | \\r | \\0 
-<escaped-utf-8>			::= (\\(<octa>{3})){2}
-<escaped-unicode>		::= U\+(<hexa>{4})
-<escaped-xml> 			::= &#(<deca>)+;
-<alnum>					::= (<alpha>|<deca>|-)
+<string>				::= <double-quote-lit> <any-unicode-char>* <double-quote-lit>  |
+							<single-quote-lit> <any-unicode-char>{2,} <single-quote-lit> 
+
+<character>				::= <single-quote-lit> <any-unicode-char> <single-quote-lit>	| 
+							<escape-char> <escaped-char-code>    				|	
+							<unicode-escape-prefix> <hexa>{4}    				| 
+							<xml-escape-prefix> <deca>+	<xml-escape-suffix>		| 
+							(<escape-char>(<octa>{3})){2}
+
+
+<boolean>				::= "true" | "false" 
+<escape-char>			::= "\"
+<escaped-char-code>		::= "n" | "r" | "0" 
+<unicode-escape-prefix>	::= "U+"
+<xml-escape-prefix> 	::= "&#"
+<xml-escape-suffix> 	::= ";"
+<single-quote-lit>		::= "'"
+<double-quote-lit>		::= '"'
+
 
 (* syntax for numbers *) 
 <number>				::= <decimal> | <hexadecimal> | <octal>
-<octal>					::= (<octa>+)
+<octal>					::= <octa>+
 <decimal>				::= <integer> | <float> 
-<float>					::= <integer>\.<positive>((e<integer>)?)
+<float>					::= <integer> "." <positive> ("e" <integer>)?
 <integer>				::= <negative> | <positive>
 <positive>				::= <deca>+ 
-<negative>				::= -<positive> 
-<hexadecimal>			::= 0x(<hexa>+)
+<negative>				::= "-" <positive> 
+<hexadecimal>			::= "0x" <hexa>+
 
-(* regular expressions for character classes*)
-<deca>					::= [0-9]
-<hexa>					::= [A-Fa-f0-9]
-<octa>					::= [0-7]
-<alpha>					::= [A-Za-z]
-<reserved>				::= [$#_]
-<opchar>				::= /* FIXME all unicode punctuation non-letter-like symbols (including _ but not -) */
 
 (* syntax for assignments *)
-<when>					::= when <thunk> | when between <thunk> | whenever <thunk>
-<lvalue>				::= (<alnum>*) | <opchar>+ 
-<rvalue>				::= <thunk> | <forcing> 
-<let>					::= <lvalue> = <rvalue>
+
+
+<when-lit>				::= "when"
+<whenever-lit>			::= "whenever"
+<between-lit>			::= "between"
+<do-lit>				::= "do"
+
+<assignment-oper>		::= "="
+
 
 (* syntax for thunking *) 
-<open-group-oper>		::= (
-<close-group-oper>		::= )
-<concat-oper>			::= &
-
+<open-group-oper>		::= "("
+<close-group-oper>		::= ")"
+<concat-oper>			::= "&"
 
 (* syntax for forcing *)
-<force-bare-oper>		::= ! 
-<force-args-oper>		::= ?
+<force-bare-oper>		::= "!"
+<force-args-oper>		::= "?"
 
 (* syntax for stack operations *)
-<pop>					::= _ 
-<swap>					::= ^
-<drop>					::= ~
-<depth>					::= #
+<pop>					::= "_" 
+<swap>					::= "^"
+<drop>					::= "~"
+<depth>					::= "#"
 
 (* syntax for I/O operations *)
-<in>					::= \< 
-<out>					::= \> 
+<in>					::= "<"
+<out>					::= ">"
 
 (* syntax for composition *) 
-<vanilla-comp-oper>		::= :
-<array-comp-oper>		::= @
-<hash-comp-oper>		::= %
-<filter-comp-oper>		::= |
+<vanilla-comp-oper>		::= ":"
+<array-comp-oper>		::= "@"
+<hash-comp-oper>		::= "%"
+<filter-comp-oper>		::= "|"
+
+(* regular expressions for character classes*)
+<lvalue-first-char>		::= <alpha> | <deca>
+<lvalue-later-char>		::= <alpha> 
+<lvalue-oper-char>		::= <oper>
+<any-unicode-char>		::= /./
+<deca>					::= /[0-9]/
+<hexa>					::= /[A-Fa-f0-9]/
+<octa>					::= /[0-7]/
+<alpha>					::= /[A-Za-z]/
+<alnum>					::= /[A-Za-z0-9/
+<oper>					::= (* FIXME *) 
