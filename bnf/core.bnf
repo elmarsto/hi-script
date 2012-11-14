@@ -9,7 +9,6 @@
 <statement>				::= <declaration> | <thunk> | <forcing> |  e ;
 
 
-(*grammar for binding values*)
 <declaration>			::= <when> | <let>;
 <when>					::= <when-lit>, <thunk>, <do-lit>, <thunk> | 
 							 <when-lit>, <between-lit>, <thunk>, <do-lit>, <thunk> | 
@@ -27,12 +26,12 @@
 <thunk>					::= <grouped-thunk> | <concatted-thunk> | <composed-thunk> | <lvalue>;
 <grouped-thunk>			::= <open-group-oper>, <expression>, <close-group-oper>;
 <concatted-thunk>		::= <statement>, {<concat-oper>, <statement>} ;
-<composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp>;
+<composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp> | <trans-comp>;
 <vanilla-comp>			::= <thunk>, <vanilla-comp-oper>, <thunk>;
 <array-comp>			::= <thunk>, <array-comp-oper>  , <thunk>;
 <hash-comp>				::= <thunk>, <hash-comp-oper>   , <thunk>;
 <filter-comp>			::= <thunk>, <filter-comp-oper> , <thunk>;
-
+<trans-comp> 			::= <thunk>, <trans-comp-oper>, <thunk>;
 
 (* grammar for values, aka forced entities, aka push values, aka computation results, aka literals *)
 <forcing>				::= <bare-force> | <force-with-args> | <implied-force>;
@@ -99,6 +98,7 @@
 <array-comp-oper>		::= "@";
 <hash-comp-oper>		::= "%";
 <filter-comp-oper>		::= "|";
+<trans-comp-oper>		::= "*";
 
 (* for forcing and values *)
 <force-bare-oper>		::= "!";
