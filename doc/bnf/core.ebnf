@@ -1,0 +1,141 @@
+(*******************************************************
+ *  Hanoi BNF -- core language						   * 
+ *******************************************************) 
+
+(**** GRAMMAR ****)
+
+(*in the beginnning....*)
+<expression>			::= <statement>, {<inline-delimiter-lit>, <statement>};
+<statement>				::= <declaration> | <thunk> | <forcing> |  e ;
+
+
+<declaration>			::= <when> | <let>;
+<when>					::= <when-lit>, <thunk>, <do-lit>, <thunk> | 
+							 <when-lit>, <between-lit>, <thunk>, <do-lit>, <thunk> | 
+							<whenever-lit>,  <thunk>, <do-lit>, <thunk>;
+<let>					::= <lvalue>, <assignment-oper>, <rvalue>;
+<lvalue>				::= <lvalue-first-char>, {<lvalue-later-char>} | 
+							<lvalue-oper-char>, {lvalue-oper-char};
+<lvalue-first-char>		::= <alpha> | <deca>;
+<lvalue-later-char>		::= <alpha>;
+<lvalue-oper-char>		::= <oper>;
+
+<rvalue>				::= <thunk> | <forcing>;
+
+(* grammar for thunking, aka creating deferred computations (promises) *)
+<thunk>					::= <grouped-thunk> | <concatted-thunk> | <composed-thunk> | <lvalue>;
+<grouped-thunk>			::= <open-group-oper>, <expression>, <close-group-oper>;
+<concatted-thunk>		::= <statement>, {<concat-oper>, <statement>} ;
+<composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp> | <trans-comp>;
+<vanilla-comp>			::= <thunk>, <vanilla-comp-oper>, <thunk>;
+<array-comp>			::= <thunk>, <array-comp-oper>  , <thunk>;
+<hash-comp>				::= <thunk>, <hash-comp-oper>   , <thunk>;
+<filter-comp>			::= <thunk>, <filter-comp-oper> , <thunk>;
+<trans-comp> 			::= <thunk>, <trans-comp-oper>, <thunk>;
+
+(* grammar for values, aka forced entities, aka push values, aka computation results, aka literals *)
+<forcing>				::= <bare-force> | <force-with-args> | <implied-force>;
+<bare-force>			::= <thunk>, <force-bare-oper>;
+<force-with-args>		::= <thunk>, <force-args-oper>, <thunk>;  (* second thunk == args *)
+<implied-force>			::= <operation> | <atom>;
+
+<atom>					::= <number> | <character> | <boolean> | <string>;
+
+<operation>				::= <io-op> | <stack-op>;
+<stack-op>				::= <pop> | <drop> | <swap> | <depth>; (* recall no push *)
+<io-op>					::= <in> | <out>;
+
+
+(**** SYNTAX ****) 
+
+(* for strings *) 
+<string>				::= <double-quote-lit>,[<any-unicode-char-except-2quote>],<double-quote-lit>  |
+							<single-quote-lit>,<any-unicode-char-except-1quote>,
+											   <any-unicode-char-except-1quote>, 
+ 											  {<any-unicode-char-except-1quote>},<single-quote-lit>;
+
+
+(* for single characters *) 
+
+<character>				::= <single-quote-lit>,<any-unicode-char-except-1quote>,<single-quote-lit>	| 
+							<escape-char>,<escaped-char-code>    				|	
+							<unicode-escape-prefix>,<hexa>,<hexa>,<hexa>,<hexa>	| 
+
+							(* notice dodge of ambiguity: the literal /'x'/ might be a char or a string. So mandate strings with single quotes must be at least 2 chars long *)
+
+
+(* for booleans *)
+<boolean>				::= <true-lit> | <false-lit>;
+
+(* for numbers *) 
+<number>				::= <decimal> | <hexadecimal>;
+<decimal>				::= <integer>; (* TODO add floats back *) 
+<integer>				::= [<neg-lit>],<positive>;
+<positive>				::= <deca>,{<deca>};
+<hexadecimal>			::= <hex-prefix>,<hexa>,{<hexa>};
+
+
+(****LITERALS****)
+
+(* basics *) 
+<inline-delimiter-lit>	::=";";
+
+(* for declarations *)
+<when-lit>				::= "when";
+<whenever-lit>			::= "whenever";
+<between-lit>			::= "between";
+<do-lit>				::= "do";
+<assignment-oper>		::= "=";
+
+
+(* for thunks and thunking *) 
+<open-group-oper>		::= "(";
+<close-group-oper>		::= ")";
+<concat-oper>			::= "&";
+
+(* for composition *) 
+<vanilla-comp-oper>		::= ":";
+<array-comp-oper>		::= "@";
+<hash-comp-oper>		::= "%";
+<filter-comp-oper>		::= "|";
+<trans-comp-oper>		::= "*";
+
+(* for forcing and values *)
+<force-bare-oper>		::= "!";
+<force-args-oper>		::= "?";
+
+(* for stack operations *)
+<pop>					::= "_";
+<swap>					::= "^";
+<drop>					::= "~";
+<depth>					::= "#";
+
+(* for I/O operations *)
+<in>					::= "<";
+<out>					::= ">";
+
+
+(* for strings and characters *)
+<escape-char>			::="\";
+<escaped-char-code>		::="n" | "r" | "0" ; (* exhaustive list of valid codes: \n, \r, \0 *)
+<unicode-escape-prefix>	::="U+";
+<single-quote-lit>		::="'";
+<double-quote-lit>		::='"';
+
+(* for booleans *) 
+<true-lit>				::="true";
+<false-lit>				::="false";
+
+(* for numbers *)
+<hex-prefix>			::="0x";
+<neg-lit>				::="-"; (* FIXME add other unicode dashes, minus signs, etc, here and everywhere *)
+
+(****CHARACTER CLASSES****)
+<any-unicode-char>		::=/./;
+<deca>					::= /[0-9]/;
+<hexa>					::=/[A-Fa-f0-9]/;
+<alpha>					::=/[A-Za-z]/;
+<alnum>					::=/[A-Za-z0-9/;
+<oper>					::=(* FIXME *) ;
+<any-unicode-char-except-1quote> ::= /[^"]/;
+<any-unicode-char-except-2quote> ::= /[^']/;
