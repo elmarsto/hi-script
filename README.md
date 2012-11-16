@@ -1,7 +1,7 @@
 hi-script
 =========
 
-Hi-script stands for 'HTTP Internet Script'.  Suave but small, this understated little lady reuses URI conventions as calling parameters and transpiles to Javascript (ECMAScript). Major influences include Coffeescript, Forth, and Haskell. Currently a Node.js project, but plans for browser support.  WARNING: Pre-alpha until Jan 1 2013. 
+Hi-script stands for 'HTTP Internet Script'.  Hi upcycles URI conventions as calling parameters and transpiles to Javascript (ECMAScript). Major influences include Coffeescript, LiveScript, Forth, and Haskell. Currently a Node.js project, but plans for browser support.  WARNING: Pre-alpha until Jan 1 2013. 
 
 
 

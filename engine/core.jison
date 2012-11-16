@@ -86,6 +86,7 @@ this means I want it right-associative, because it should be 'greedy' and absorb
 
 /* use new EBNF rules for Jison */ 
 %ebnf 
+%start code
 %%
 
 
