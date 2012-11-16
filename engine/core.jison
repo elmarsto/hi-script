@@ -3,160 +3,143 @@
  *******************************************************/ 
 
 %lex
-/****CHARACTER CLASSES****/
-[0-9]          return 'DECA';
-[A-Fa-f0-9]    return 'HEXA';
-[A-Za-z]       return 'ALPHA';
-[A-Za-z0-9]    return 'ALNUM';
+
+DECA        [1-9]([0-9]*)
+SYM         ([A-Za-z]([A-Za-z0-9]*)
 
 %%
+{DECA}      return 'UINT'
+{SYM}       return 'SYMBOL'
 
-"--".*         /* ignore inline comment */
+\s+        /*skip whitespace*/
+"--".*     /* ignore inline comment */
 
 /* for declarations */
-"when"      return 'WHEN';
-"whenever"  return 'WHENEVER';
-"between"   return 'BETWEEN';
-"do"        return 'DO';
-"="         return 'ASSIGN';
-":="        return 'DECLARE';
+"when"      return 'WHEN'
+"whenever"  return 'WHENEVER'
+"between"   return 'BETWEEN'
+"do"        return 'DO'
+"="         return 'ASSIGN'
+"<-"        return 'DECLARE'
 
 /* for thunks and thunking */ 
 
-"(" return 'OPEN';
-")" return 'CLOSE'; 
-"&" return 'CONCAT';
+"("         return 'OPEN'
+")"         return 'CLOSE' 
+"&"         return 'CONCAT'
 
 /* for composition */ 
-":" return 'COMPOSE';
-"@" return 'ACOMPOS';
-"%" return 'HCOMPOS';
-"|" return 'FCOMPOS';
-"*" return 'TCOMPOS';
+":"         return 'COMPOSE'
+"@"         return 'ACOMPOS'
+"%"         return 'HCOMPOS'
+"|"         return 'FCOMPOS'
+"*"         return 'TCOMPOS'
 
 /* for forcing and values */
-"!" return 'FORCE';
-"?" return 'FORCEWARGS';
+"!"         return 'FORCE'
+"?"         return 'FORCEWITH'
 
 /* for stack operations */
-"_" return 'POP';
-"^" return 'SWAP';
-"~" return 'DROP';
-"#" return 'DEPTH';
+"_"         return 'POP'
+"^"         return 'SWAP'
+"~"         return 'DROP'
+"#"         return 'DEPTH'
 
 /* for I/O operations */
-"<" return 'IN';
-">" return 'OUT';
+"<"         return 'IN'
+">"         return 'OUT'
+
+/* For introspection */
+"$"         return 'STATE'
 
 /* for strings and characters */
-"\" return 'ESCAPEC';
-"U+" return 'UPLUS';
-"'"return 'SINGLEQ';
-'"' return 'DOUBLEQ';
+"\"         return 'ESCAPEC'
+"'"         return 'SINGLEQ'
+'"'         return 'DOUBLEQ'
 
 /* for booleans */ 
-"true" return 'TRUE';
-"false" return 'FALSE';
+"true"      return 'TRUE'
+"false"     return 'FALSE'
 
-/* for numbers */
-"0x" return 'HEXPREFIX';
-"-" return 'NEGATION';
 
-";"            return 'DELIM'; 
-\s+            /*skip whitespace*/
-<<EOF>>        return 'EOF';
+<<EOF>>     return 'EOF'
+            return 'INVALID'
 
 /lex
 
-%right 'DECLARE' 'FORCEWARGS'
-%left  'ASSIGN'  'FORCE'
 
-%left  'NEGATION'
-%left  'CONCAT'
+/* standard stuff. Declarations are right-associative. */
+%right 'WHEN' 'WHENEVER' 'BETWEEN' 'DECLARE'
 
-%left  'POP' 'DROP' 'SWAP' 'DEPTH'
-%left  'IN' 'OUT'
+/* the force-with operator, ?, does what the FORCE operator does, but takes an additional thunk as the RHS argument. This thunk specifies the intial symbol and stack context. I think (TODO confirm)
+this means I want it right-associative, because it should be 'greedy' and absorb symbols until EOL */
+%right 'FORCEWITH'
 
+/* inline assignments, standard forcings, and concatenation are all left-associative */
+%left  'ASSIGN'  'FORCE' 'CONCAT'
 
+/* so are all stack and IO primitives */
+%left  'POP' 'DROP' 'SWAP' 'DEPTH' 'IN' 'OUT'
 
-%start expressions
+/* so are composition operators, although TODO maybe add an operator like Haskell's $ which is highly useful*/
+%left   'COMPOSE' 'ACOMPOS' 'HCOMPOS' 'FCOMPOS' 'TCOMPOS'
+
+/* use new EBNF rules for Jison */ 
+%ebnf 
 %%
 
 
-expressions    : expression EOF
-                           { typeof console !== 'undefined' ? console.log($1) : print($1); 
-                             return $1; 
+code              : statements* EOF
+                           { typeof console !== 'undefined' ? console.log($1) : print($1) 
+                             return $1 
                            } 
-               ;
+               
+statement		   : declaration | thunk | forcing
+           
+declaration       : WHEN thunk DO thunk 
+                  | thunk BETWEEN thunk DO thunk
+                  | WHENEVER thunk DO thunk
+                  | lvalue DECLARE rvalue 
 
-expression		: statement, {DELIM, statement}
+lvalue			   : symbol
+rvalue			   : thunk | forcing 
 
-STOPPED work here. TODO
-<statement>				::= <declaration> | <thunk> | <forcing> |  e 
+assignment   	   : lvalue ASSIGN rvalue
 
+thunk				   :  OPEN expressions CLOSE
+                  |  substatement CONCAT substatement
+                  |  thunk compose thunk
+                  |  symbol
+               
+               
+compose           : COMPOSE | ACOMPOS | HCOMPOS | FCOMPOS | TCOMPOS 
 
-<declaration>			::= <when> | <let>
-<when>					::= <when-lit>, <thunk>, <do-lit>, <thunk> | 
-							 <when-lit>, <between-lit>, <thunk>, <do-lit>, <thunk> | 
-							<whenever-lit>,  <thunk>, <do-lit>, <thunk>
-<let>					::= <lvalue>, <assignment-oper>, <rvalue>
-<lvalue>				::= <lvalue-first-char>, {<lvalue-later-char>} | 
-							<lvalue-oper-char>, {lvalue-oper-char}
-<lvalue-first-char>		::= <alpha> | <deca>
-<lvalue-later-char>		::= <alpha>
-<lvalue-oper-char>		::= <oper>
+substatement      : forcing | thunk | assignment
 
-<rvalue>				::= <thunk> | <forcing>
+forcing				: thunk FORCE 
+                  | thunk FORCEWITH thunk
+                  | atom
+                  | primitive 
 
-/* grammar for thunking, aka creating deferred computations (promises) */
-<thunk>					::= <grouped-thunk> | <concatted-thunk> | <composed-thunk> | <lvalue>
-<grouped-thunk>			::= <open-group-oper>, <expression>, <close-group-oper>
-<concatted-thunk>		::= <statement>, {<concat-oper>, <statement>} 
-<composed-thunk>		::= <vanilla-comp> | <array-comp> | <hash-comp> | <filter-comp> | <trans-comp>
-<vanilla-comp>			::= <thunk>, <vanilla-comp-oper>, <thunk>
-<array-comp>			::= <thunk>, <array-comp-oper>  , <thunk>
-<hash-comp>				::= <thunk>, <hash-comp-oper>   , <thunk>
-<filter-comp>			::= <thunk>, <filter-comp-oper> , <thunk>
-<trans-comp> 			::= <thunk>, <trans-comp-oper>, <thunk>
+primitive         : POP
+                  | DROP
+                  | SWAP
+                  | DEPTH
+                  | IN
+                  | OUT
+                  | STATE
 
-/* grammar for values, aka forced entities, aka push values, aka computation results, aka literals */
-<forcing>				::= <bare-force> | <force-with-args> | <implied-force>
-<bare-force>			::= <thunk>, <force-bare-oper>
-<force-with-args>		::= <thunk>, <force-args-oper>, <thunk>;  /* second thunk == args */
-<implied-force>			::= <operation> | <atom>
-
-<atom>					::= <number> | <character> | <boolean> | <string>
-
-<operation>				::= <io-op> | <stack-op>
-<stack-op>				::= <pop> | <drop> | <swap> | <depth>; /* recall no push */
-<io-op>					::= <in> | <out>
+atom              : boolean
+                  | number
+                  | string
 
 
-/**** SYNTAX ****/ 
-
-/* for strings */ 
-<string>				::= <double-quote-lit>,[<any-unicode-char-except-2quote>],<double-quote-lit>  |
-							<single-quote-lit>,<any-unicode-char-except-1quote>,
-											   <any-unicode-char-except-1quote>, 
- 											  {<any-unicode-char-except-1quote>},<single-quote-lit>
+symbol            : SYMBOL
+boolean				: TRUE | FALSE
+number				: UINT
+string				: DOUBLEQ CHAR* DOUBLEQ
+                  | SINGLEQ CHAR* SINGLEQ
 
 
-/* for single characters */ 
 
-<character>				::= <single-quote-lit>,<any-unicode-char-except-1quote>,<single-quote-lit>	| 
-							<escape-char>,<escaped-char-code>    				|	
-							<unicode-escape-prefix>,<hexa>,<hexa>,<hexa>,<hexa>	| 
-
-							/* notice dodge of ambiguity: the literal /'x'/ might be a char or a string. So mandate strings with single quotes must be at least 2 chars long */
-
-
-/* for booleans */
-<boolean>				::= <true-lit> | <false-lit>
-
-/* for numbers */ 
-<number>				::= <decimal> | <hexadecimal>
-<decimal>				::= <integer>; /* TODO add floats back */ 
-<integer>				::= [<neg-lit>],<positive>
-<positive>				::= <deca>,{<deca>}
-<hexadecimal>			::= <hex-prefix>,<hexa>,{<hexa>}
 %%
