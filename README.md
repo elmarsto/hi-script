@@ -53,7 +53,7 @@ Here are a couple of teasers:
  - Conceptually, a Hi app consists of a series of (very) small virtual machines consisting of a stack and a symbol table. Coding hi (no pun intended) is the act of crafting the relationships between these machines; passing around iterators; naming (routing) functions; etc. The stack comprises the function's body, and the symbol table provides support for closures (anonymous functions.)
  - Objects are not idiomatic in Hi. But anything you could do with an object, you could do with a monad, and a lot more besides.
  - Hi is not a 'pure' language, despite its penchant for monads. But mutation can only take place on the stack, and stacks aren't shared. This makes it easier to write performantly concurrent software (sorry Ruby), but still easy to write boring software.(Unlike Haskell, poor dear.) 
- - Hi blends the best aspects of low level programming and very high level programming. You get your simple, predictable primitives, but all the mathy power you need to finally shush your colleague who went to MIT. (Lucky nerds!) 
+ - Hi blends the best aspects of low level programming and very high level programming. You get your simple, predictable primitives, but all the mathy power you need to finally shush your colleague who went to MIT. (Lucky nerd!) 
  - Monads in Hi are just little tiny Turing machines, set up so you can pipe the output of one into another. It's like networking a bunch of calculators together. Ironically, this turns out to be a much more efficient and expressive way of developing than what you're probably used to. And while it might not sound like it,
  - Hi is fun. Really, really fun. Enjoy coding again. 
 
