@@ -17,14 +17,13 @@ Hi-script (= 'HTTP Internet Script').  Suave but small, this understated little 
 
 Every named function of hi-script is named not with a string of characters, but with an XPath expression and (optionally) a set of parameter filters. Functions are called via mentioning a matching path. Polymorphism happens via filtering and testing of parameters.
 
-`when put@localhost/foo/bar/* ? foo=(string) & bar=(number:lt?10) do 
+`<pre>when put@localhost/foo/bar/* ? foo=(string) & bar=(number:lt?10) do 
  --function body...
 end
 
 when put@localhost/foo/bar/* 
  --catch-all
-end
-`
+end</pre>`
 _N.B. a comment is introduced by a double dash (--)_
 
 Calling is similar. Arguments are optionally passed after the ?:
