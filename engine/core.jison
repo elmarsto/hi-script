@@ -7,12 +7,12 @@
 /* numbers */
 DECA        [1-9]([0-9]*)
 
-/*TODO Clean this up? How to refer to previously declared groups from with in the regex? */
-/*Basically, a symbol can be any nonzero-length utf-8 character string, but it can't contain a reserved symbol and it can't start with a number, a /, or a - */
-SYM         [^.,;:/0123456789\\^_~!@#$%^&*()<>|?!"`'=-]([^.,;:\\^_~!@#$%^&*()<>|?!"`'=]*)
+/*TODO DRY this mess up. How to refer to previously declared groups from with in the regex? */
+/*Basically, a symbol can be any nonzero-length utf-8 non-whitespace character string, but it can't contain a reserved symbol and it can't start with a number, a /, a ., or a - */
+SYM         [^.,;:/0123456789\\^_~!@#$%^&*()<>|?!"`'= \n\t\r\0{}\[\]-]([^,;:\\^_~!@#$%^&*()<>|?!"`'= \n\t\r\0{}\[\]]*)
 
 /* The same thing, but for JSON object literal bare key names */ 
-JSYM    [A-Za-z0-9_-]+
+JSYM        [A-Za-z0-9_- \t\n\r\0]+
 
 %%
 {DECA}      return 'UINT'     /* positive integer */
@@ -43,8 +43,8 @@ JSYM    [A-Za-z0-9_-]+
 
 /* for composition */ 
 ":"         return 'COMPOSE'
-"@"         return 'ASARRAY'
-"%"         return 'ASHASH'
+"@"         return 'MKARRAY'
+"%"         return 'MKHASH'
 "|"         return 'FILTER'
 "><"        return 'REFLECT'
 
@@ -98,7 +98,7 @@ JSYM    [A-Za-z0-9_-]+
 "}"         return 'JSON_RBRCE'
 ":"         return 'JSON_COLON'
 ","         return 'JSON_COMMA'
-
+"."         return 'JSON_DOT'
 
 /* edge conditions */ 
 <<EOF>>     return 'EOF'
@@ -120,7 +120,14 @@ JSYM    [A-Za-z0-9_-]+
 %left  'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'POP' 'PEEK' 'DROP' 'SWAP' 'DEPTH' 'IN' 'OUT'
 
 /* so are composition operators, although TODO maybe add an operator like Haskell's $ which is highly useful*/
-%left   'COMPOSE' 'ASARRAY' 'ASHASH' 'FILTER' 'REFLECT'
+%left   'COMPOSE' 'MKARRAY' 'MKHASH' 'FILTER' 'REFLECT'
+
+/* JSON */
+/* member access is left assoc */
+%left  'JSON_DOT'
+/* key/value declaration colon is right-associative */
+%right 'JSON_COLON'
+/* I think everything else JSON-related goes without saying? TODO vfy */ 
 
 /* use new EBNF rules for Jison */ 
 %ebnf 
@@ -152,31 +159,24 @@ thunk				   :  OPEN expressions CLOSE
                   |  json
 
 
-json              : JSON_LBRKT json      (JSON_COMMA json     )* JSON_RBRKT
-                  | JSON_LBRCE json_pair (JSON_COMMA json_pair)* JSON_RBRCE
-                  | atom   /* conveniently, hi-script shares atomic types with JSON */
-                  | thunk  /* monads can be sent out the door as JSON, because that's what they are internally! holy introspection batgirl */ 
-
-json_pair         : json_key JSON_COLON json /* the thunk must produce a valid JSON object key, or runtime exception occurs */
-
-json_key          : string
-                  | thunk
-                  | JSON_SYMBL
                
-compose           : COMPOSE | ARRAY | HASH | FILTER | REFLECT
+compose           : COMPOSE | MKARRAY | MKHASH | FILTER | REFLECT
 
 substatement      : forcing | thunk | assignment
 
-forcing				: thunk FORCE 
+forcing				: thunk FORCE
                   | thunk FORCEWITH thunk
+                  | json_elt_access
                   | atom
-                  | primitive 
+                  | primitive
+
 
 primitive         : PLUS      /* arithmetic */
                   | MINUS
                   | TIMES
                   | DVDBY
                   | POP       /* stack */
+                  | PEEK
                   | DROP
                   | SWAP
                   | DEPTH
@@ -195,4 +195,20 @@ number				: UINT /* TODO floats, negative integers */
 string				: Q  CHAR* Q
                   | QQ CHAR* QQ
 
+/* JSON compatibility */ 
+json              : JSON_LBRKT json_val  (JSON_COMMA json_val )* JSON_RBRKT
+                  | JSON_LBRCE json_pair (JSON_COMMA json_pair)* JSON_RBRCE
+
+json_pair         : json_key JSON_COLON json_elt /* the thunk must produce a valid JSON object key, or runtime exception occurs */
+
+json_key          : string      /* 'any' "utf-8 string" 'will do'
+                  | forcing     /* must return valid JSON_SYMBL else runtime error */
+                  | JSON_SYMBL
+
+json_val          : json
+                  | forcing
+                  | thunk  /* monads can be sent out the door as JSON, because that's what they are internally! holy introspection batgirl */ 
+
+json_elt_access   : thunk <JSON_DOT>   forcing              /* forced computation must return a valid symbol, else runtime exception */ 
+                  | thunk <JSON_LBRKT> forcing <JSON_RBRKT> /* ditto, but s/symbol/integer  */
 %%
