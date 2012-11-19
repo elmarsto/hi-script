@@ -15,9 +15,6 @@ DCNZ  [1-9]
 SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
 SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 
-/* The same thing, but for JSON object literal bare key names */ 
-JSYM  [A-Za-z0-9_-\s]+
-
 %%
 
 \s+          /* skip whitespace */
@@ -28,8 +25,8 @@ JSYM  [A-Za-z0-9_-\s]+
 
 
 /* numbers */ 
-("-"?)({DCNZ}({DECA}*)|"0"+)\b             return "INT"
-("-"?)({DCNZ}({DECA}*)|"0"+)"."({DECA}+)\b return "FLOAT" /*TODO scientific notation*/
+("-"?)({DCNZ}({DECA}*)|"0"+)\b             return 'INT'
+("-"?)({DCNZ}({DECA}*)|"0"+)"."({DECA}+)\b return 'FLOAT' /*TODO scientific notation*/
 
 /* symbols */ 
 {SYM1}({SYMN}*)\b return 'SYMWORD'                          /* symbol-word= a potential lvalue */
@@ -107,6 +104,7 @@ JSYM  [A-Za-z0-9_-\s]+
 "]"         return 'JSON_RBRKT'
 "{"         return 'JSON_LBRCE'
 "}"         return 'JSON_RBRCE'
+"{}"        return 'JSON_EMPTY'
 ":"         return 'JSON_COLON'
 ","         return 'JSON_COMMA'
 "."         return 'JSON_DOT'
@@ -120,84 +118,68 @@ JSYM  [A-Za-z0-9_-\s]+
 
 /* standard stuff. Declarations are right-associative. */
 %right 'WHEN' 'WHENEVER' 'BETWEEN' 'DECLARE'
-
 /* the force-with operator, ?, does what the FORCE operator does, but takes an
  * additional thunk as the RHS argument. */
 %right 'FORCEWITH'
-
 /* inline assignments, standard forcings, and concatenation are all
  * left-associative */
-%left  'ASSIGN'  'FORCE'
-
+%left  'ASSIGN' 'FORCE'
 /* so are all arithmetic, stack and IO primitives */
 %left  'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'POP' 'PEEK' 'DROP' 'SWAP' 'IN' 'OUT'
-
 /* JSON member access*/
 %left  'JSON_DOT'
 /* JSON key/value declaration  */
 %right 'JSON_COLON'
-
 /* so are composition operators, although TODO maybe add an operator like
  * Haskell's $ which is highly useful*/
 %left  'COMPOSE' 'CONCAT' 'MKARRAY' 'MKHASH' 'FILTER' 'REFLECT'
-
-
 /* use new EBNF rules for Jison */ 
 %ebnf 
 %start code
 %%
-
-
-code             : expr* EOF
+code             : statement* EOF
                            { typeof console !== 'undefined' ? console.log($1) : print($1) 
                              return $1 
                            } 
-              
-
+statement        : expr (DELIMITER?)
 expr             : thunk | forcing 
-
-/* a closure, aka monad, aka computation-type */
-thunk				  :  declaration
-                 |  composition
-                 |  symbol
-                 |  json
-
-declaration      : WHEN thunk DO thunk 
-                 | WHENEVER thunk DO thunk
-                 | thunk BETWEEN thunk DO thunk
-                 | symbol DECLARE expr
-                 | symbol ASSIGN  expr
-               
-composition:     : thunk COMPOSE thunk
-                 | thunk CONCAT  thunk
-                 | thunk MKARRAY thunk
-                 | thunk MKHASH  thunk
-                 | thunk FILTER  thunk
-                 | thunk REFLECT thunk
-
+thunk				  : declaration | composition | symbol | json 
+declaration      : modal | assignment
+assignment       : symbol assgn expr
+                 | assign expr
+                 | assign
+assign           : ASSIGN | DECLARE
+modal            : when expr DO thunk
+                 | when DO thunk
+                 | when DO 
+when             : WHEN | WHENEVER | BETWEEN                 
+composition      : thunk comp thunk
+                 | comp thunk
+                 | comp
+comp             : COMPOSE | CONCAT | MKARRAY | MKHASH | FILTER | REFLECT 
 forcing			  : thunk FORCE
-                 | thunk FORCEWITH thunk
-                 | json_elt_access
+                 | FORCE
+                 | thunk FORCEWITH expr
+                 | FORCEWITH expr
+                 | FORCEWITH
+                 | access
                  | atom
                  | operator
-
-operator         : unary
-                 | forcing forcing (binary?)
-                 | forcing* n_ary
-
+operator         : unor | binor | n_or   /* 'un' 'o(perato)r' = unor , etc. */
+unor             : unary
 unary            : DEPTH                 /* (as integer) current depth of the stack */ 
                  | GESTALT               /* special value represents current monad */ 
-
+                 | POP  
+                 | PEEK
+                 | DROP
+                 | IN 
+                 | OUT
+binor            : expr binary expr
+                 | expr binary 
+                 | binary
 binary           : SWAP                  /* any others? TODO think about it */
-
-/* these can take an arbitrary number of arguments */
-n_ary            : actual_n_ary | convenience_n_ary
-actual_n_ary     : arithmetic
-arithmetic       : PLUS | MINUS | TIMES | DVDBY
-convenience_n_ary: stack | io
-stack            : POP | PEEK | DROP  
-io               : IN | OUT
-
+n_or             : expr* n_ary
+n_ary            : PLUS | MINUS | TIMES | DVDBY
 atom             : boolean
                  | number
                  | string
@@ -206,17 +188,17 @@ boolean			  : T | F
 number			  : INT | FLOAT
 string			  : Q  CHAR* Q
                  | QQ CHAR* QQ
+json             : JSON_LBRKT expr (JSON_COMMA expr)* JSON_RBRKT
+                 | JSON_LBRCE pair (JSON_COMMA pair)* JSON_RBRCE
+                 | empty
 
-/* JSON compatibility */ 
-json              : JSON_LBRKT json_val  (JSON_COMMA json_val )* JSON_RBRKT
-                  | JSON_LBRCE json_pair (JSON_COMMA json_pair)* JSON_RBRCE
-json_pair         : json_key JSON_COLON json_elt /* the thunk must produce a
-                                                    valid JSON object key, or 
-                                                    runtime exception occurs */
-json_key          : string      /* 'any' "utf-8 string" 'will do' */
-                  | forcing     /* must return valid JSON_SYMBL else runtime error */
-                  | JSON_SYMBL 
-json_val          : json | expr
-json_elt_access   : thunk JSON_DOT   forcing  /* forced computation must return a valid symbol */
-                  | thunk JSON_LBRKT forcing JSON_RBRKT /* ditto, but s/symbol/integer  */
+empty            : JSON_LBRCE JSON_RBRCE
+                 | JSON_EMPTY
+
+pair             : (string | thunk) JSON_COLON expr /* the thunk must produce a
+                                                   valid JSON object key, or 
+                                                   runtime exception occurs */
+
+access           : thunk JSON_DOT   expr /* forced computation must return a valid symbol */
+                 | thunk JSON_LBRKT expr JSON_RBRKT /* ditto, but s/symbol/integer  */
 %%
