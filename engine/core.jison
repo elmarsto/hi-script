@@ -141,11 +141,11 @@ code             : statement* EOF
                            { typeof console !== 'undefined' ? console.log($1) : print($1) 
                              return $1 
                            } 
-statement        : expr (DELIMITER?)
+statement        : expr (DELIMITER?)      
 expr             : thunk | forcing 
 thunk				  : declaration | composition | symbol | json 
 declaration      : modal | assignment
-assignment       : symbol assgn expr
+assignment       : symbol assign expr    
                  | assign expr
                  | assign
 assign           : ASSIGN | DECLARE
@@ -162,7 +162,7 @@ forcing			  : thunk FORCE
                  | thunk FORCEWITH expr
                  | FORCEWITH expr
                  | FORCEWITH
-                 | access
+                 | json_access
                  | atom
                  | operator
 operator         : unor | binor | n_or   /* 'un' 'o(perato)r' = unor , etc. */
@@ -199,6 +199,6 @@ pair             : (string | thunk) JSON_COLON expr /* the thunk must produce a
                                                    valid JSON object key, or 
                                                    runtime exception occurs */
 
-access           : thunk JSON_DOT   expr /* forced computation must return a valid symbol */
-                 | thunk JSON_LBRKT expr JSON_RBRKT /* ditto, but s/symbol/integer  */
+json_access      : thunk JSON_DOT   expr /* forced computation must return a valid key */
+                 | thunk JSON_LBRKT expr JSON_RBRKT /* ditto, but s/key/index  */
 %%
