@@ -10,16 +10,15 @@
 
 /* Associativity for thunk declarations and compositions */
 %right 'DECLARE' 
-%left  'ASSIGN' 'IMPLY' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT' 'MEMBER' 'ISMEMBER'
+%left  'ASSIGN' 'IMPLY' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT'
 
 /* Associativity for binary forcing operators */ 
 %right 'FORCEWITH'
-%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'EQUALS' 'NEQUALS' 'GTE' 'LTE' 'GT' 'LT' 'SWAP'
+%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'EQUALS' 'NEQUALS' 'GTE' 'LTE' 'GT' 'LT' 'SWAP' 'MEMBER' 'ISMEMBER'
 
 
 /*
  *  GRAMMAR
- *
  */
 
 %ebnf 
@@ -33,13 +32,14 @@ expr             : thunk | forcing
  *   Thunks
  */
 
-thunk			 : SYMBOL | declaration | composition | thunk_literal
+thunk			     : lvalue | special | declaration | composition | thunk_literal
+lvalue           : SYMBOL
+special          : ELLIPSIS | GESTALT
 
-declaration      : SYMBOL (ASSIGN|DECLARE) (expr?)
+declaration      : (lvalue (ASSIGN|DECLARE) (expr?)
 
-composition      : (thunk?) composer thunk | composer (thunk?) 
-
-composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT | MEMBER | ISMEMBER
+composition      : (thunk?) composer thunk  | composer (thunk?) 
+composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT
 
 thunk_literal    : object | array | closure | EMPTY
 object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE 
@@ -53,9 +53,9 @@ closure          : LPARN  expr* RPARN
 forcing			 : operator | literal
 
 operator         : unary | (expr?) binary (expr?)
-unary            : NOT | DEPTH | GESTALT | POP | PEEK | DROP | IN | OUT | FORCE
+unary            : NOT | DEPTH | POP | PEEK | DROP | IN | OUT | FORCE
 binary           : EQUALS | NEQUALS | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
-                 | PLUS | MINUS | TIMES | DVDBY | FORCEWITH 
+                 | PLUS | MINUS | TIMES | DVDBY | FORCEWITH | MEMBER | ISMEMBER
 
 literal          : boolean | number | string
 string			 : Q  CHAR* Q | QQ CHAR* QQ
