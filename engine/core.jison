@@ -5,16 +5,20 @@
  *************/
 
 /*
- *  PRELIMINARIES
+ *  ASSOCIATIVITY AND PRECEDENCE
  */
 
-/* Associativity for thunk declarations and compositions */
-%right 'DECLARE' 
-%left  'ASSIGN' 'IMPLY' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT'
+%right DECLARE 
+%left  IN OUT DROP
+%left  IMPLY COMPOSE CONCAT MKARRAY MKOBJ FILTER REFLECT
+%left  NOT AND IOR XOR
+%left  ISMEMBER EQUALS NEQUALS GTE LTE GT LT 
+%left  PLUS MINUS
+%left  TIMES DVDBY
+%left  POP PEEK SWAP
+%left  MEMBER ASSIGN DEPTH
+%left  FORCE FORCEWITH
 
-/* Associativity for binary forcing operators */ 
-%right 'FORCEWITH'
-%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'EQUALS' 'NEQUALS' 'GTE' 'LTE' 'GT' 'LT' 'SWAP' 'MEMBER' 'ISMEMBER'
 
 
 /*
@@ -26,7 +30,24 @@
 
 input            : input line 
 line             : (expr?) delimiter                
-expr             : thunk | forcing 
+expr             : forcing | thunk 
+
+/*
+ *   Forcings
+ */
+
+forcing			 : operator | literal
+
+operator        : unary | (expr?) binary (expr?)
+unary           : NOT | DEPTH | POP | PEEK | DROP | IN | OUT | FORCE
+binary          : EQUALS | NEQUALS | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
+                | PLUS | MINUS | TIMES | DVDBY | FORCEWITH | MEMBER | ISMEMBER
+
+literal         : boolean | number | string | constant
+string			 : Q  CHAR* Q | QQ CHAR* QQ
+number			 : INT | FLOAT
+boolean			 : T | F
+constant        : E | PI  
 
 /*
  *   Thunks
@@ -45,22 +66,6 @@ thunk_literal    : object | array | closure | EMPTY
 object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE 
 array            : LBRKT  expr (COMMA expr)* RBRKT
 closure          : LPARN  expr* RPARN
-
-/*
- *   Forcings
- */
-
-forcing			 : operator | literal
-
-operator         : unary | (expr?) binary (expr?)
-unary            : NOT | DEPTH | POP | PEEK | DROP | IN | OUT | FORCE
-binary           : EQUALS | NEQUALS | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
-                 | PLUS | MINUS | TIMES | DVDBY | FORCEWITH | MEMBER | ISMEMBER
-
-literal          : boolean | number | string
-string			 : Q  CHAR* Q | QQ CHAR* QQ
-number			 : INT | FLOAT
-boolean			 : T | F
 
 /* EOF */
 %%
