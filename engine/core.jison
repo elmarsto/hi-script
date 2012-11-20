@@ -1,10 +1,10 @@
 /*******************************************************
- *  Hi-Script -- core language      			     			   * 
+ *  Hi-Script -- core language    
  *******************************************************/ 
 
 %right 'WHEN' 'WHENEVER' 'BETWEEN' 'DECLARE' 'FORCEWITH'
-%left  'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'POP' 'PEEK' 'DROP' 'SWAP' 'IN' 'OUT'
-%left  'ASSIGN' 'FORCE' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT' 'DOT' 'COLON'
+%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 
+%left  'SWAP' 'ASSIGN' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT' 'DOT' 'COLON'
 %ebnf 
 %start code
 %%
@@ -16,7 +16,7 @@ expr             : thunk | forcing
  * THUNKS
  */
 
-thunk				  : SYMBOL | declaration | composition | object | array | closure
+thunk			 : SYMBOL | declaration | composition | object | array | closure
 
 /* attach a thunk to an event or a symbol */
 declaration      : SYMBOL (ASSIGN|DECLARE) (expr?) (WHEN | WHENEVER | BETWEEN) (expr?) DO (thunk?)
@@ -37,11 +37,11 @@ closure          : LPARN  expr* RPARN
 forcing			  : atom | operator
 
 operator         : unary | (expr?) binary (expr?)
-unary            : DEPTH | GESTALT | POP  | PEEK | DROP | IN | OUT | FORCE
-binary           : SWAP | PLUS | MINUS | TIMES | DVDBY | FORCEWITH
+unary            : NOT | DEPTH | GESTALT | POP | PEEK | DROP | IN | OUT | FORCE
+binary           : AND | IOR | XOR | SWAP | PLUS | MINUS | TIMES | DVDBY | FORCEWITH
 
 atom             : boolean | number | string
-string			  : Q  CHAR* Q | QQ CHAR* QQ
-number			  : INT | FLOAT
-boolean			  : T | F
+string			 : Q  CHAR* Q | QQ CHAR* QQ
+number			 : INT | FLOAT
+boolean			 : T | F
 %%
