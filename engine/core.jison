@@ -36,7 +36,7 @@ thunk			     : lvalue | special | declaration | composition | thunk_literal
 lvalue           : SYMBOL
 special          : ELLIPSIS | GESTALT
 
-declaration      : (lvalue (ASSIGN|DECLARE) (expr?)
+declaration      : lvalue (ASSIGN|DECLARE) (expr?)
 
 composition      : (thunk?) composer thunk  | composer (thunk?) 
 composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT
