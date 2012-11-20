@@ -26,7 +26,7 @@
 %%
 
 input            : input line 
-line             (expr?) delimiter                
+line             : (expr?) delimiter                
 expr             : thunk | forcing 
 
 /*
@@ -38,7 +38,7 @@ thunk			 : SYMBOL | declaration | composition | thunk_literal
 declaration      : SYMBOL (ASSIGN|DECLARE) (expr?)
 
 composition      : (thunk?) composer thunk | composer (thunk?) 
-                   /* composers AKA 'thunk operators'; they all have function-composition syntax, so 'composer' is apt */
+
 composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT | MEMBER | ISMEMBER
 
 thunk_literal    : object | array | closure | EMPTY
