@@ -1,0 +1,63 @@
+DECA  [0-9]
+DCNZ  [1-9]
+/* TODO DRY this mess up. Is it permissible refer to previously declared groups from with
+ * in the range section? TODO research */
+SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
+SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
+
+%%
+\s+          									/* ignore whitespc */
+"---"\b.*   	           						/* ignore comments */ 
+("-"?)({DCNZ}({DECA}*)|"0"+)\b  				return 'INT'
+("-"?)({DCNZ}({DECA}*)|"0"+)"."({DECA}+)\b 		return 'FLOAT'
+[\n;]+      									return 'DELIMITER'
+"when"      									return 'WHEN'
+"whenever"  									return 'WHENEVER'
+"between"   									return 'BETWEEN'
+("->"|"→")     									return 'DO'
+"="         									return 'ASSIGN'  
+("<-"|"←")     									return 'DECLARE' 
+("∶"|":")       									return 'COMPOSE'
+("&"|"⁀")      									return 'CONCAT'
+"@"         									return 'MKARRAY'
+("⋆"|"*")         								return 'MKOBJ'
+"|"           									return 'FILTER'
+"%"         									return 'REFLECT'
+"!"         									return 'FORCE'
+"?"         									return 'FORCEWITH'
+("$"|"⎎")      									return 'GESTALT' 
+("#"|"↧")   									return 'DEPTH'   
+"+"         									return 'PLUS'
+"-"         									return 'MINUS'
+"×"         									return 'TIMES'
+"÷"         									return 'DIVDBY'
+("&&"|"and"|[⋎∪∨])		    					return 'AND'
+("=="|"==="|"≡")								return 'EQUALS'
+("!="|"!=="|"≢")								return 'NEQUALS'
+("||"|"or"|[⋏∩∧])                               return 'IOR'
+("⊕"|"⊻"|"xor")		               				return 'XOR'
+("not"|"¬")										return 'NOT'
+("_"|"␣")      									return 'POP'  
+("__"|"⍽")     									return 'PEEK'
+("^"|"⌃")      									return 'SWAP'
+("~"|"∾")        								return 'DROP' 
+("<"|"‹")      									return 'IN'   
+(">"|"›")      									return 'OUT'  
+"'"         									return 'Q'
+'"'         									return 'QQ'
+("..."|"…"|"⋮")	    							return 'ELLIPSIS'
+("true"|"⊨")    								return 'T'
+("false"|"⊭")   								return 'F'
+"("         									return 'LPARN'
+")"         									return 'RPARN' 
+"["         									return 'LBRKT'
+"]"         									return 'RBRKT'
+"{"         									return 'LBRCE'
+"}"         									return 'RBRCE'
+("{}"|"∅")     									return 'EMPTY'
+":"         									return 'COLON'
+","         									return 'COMMA'
+([.·]|[∋∍])        								return 'DOT'
+{SYM1}({SYMN}*)\b 								return 'SYMBOL'
+<<EOF>>     									return 'EOF'
+            									return 'INVALID
