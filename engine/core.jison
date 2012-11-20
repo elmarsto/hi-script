@@ -1,47 +1,66 @@
-/*******************************************************
- *  Hi-Script -- core language    
- *******************************************************/ 
+/*************
+   Hi-Script
+   WTF Public License
+   (c) 2012 Undoware
+ *************/
 
-%right 'WHEN' 'WHENEVER' 'BETWEEN' 'DECLARE' 'FORCEWITH'
-%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'EQUALS' 'NEQUALS' 'GTE' 'LTE' 'GT' 'LT'
-%left  'SWAP' 'ASSIGN' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT' 'DOT' 'COLON' 'MEMBEROF'
+/*
+ *  PRELIMINARIES
+ */
+
+/* Associativity for thunk declarations and compositions */
+%right 'DECLARE' 
+%left  'ASSIGN' 'IMPLY' 'COMPOSE' 'CONCAT' 'MKARRAY' 'MKOBJ' 'FILTER' 'REFLECT' 'MEMBER' 'ISMEMBER'
+
+/* Associativity for binary forcing operators */ 
+%right 'FORCEWITH'
+%left  'AND' 'IOR' 'XOR' 'PLUS' 'MINUS' 'TIMES' 'DVDBY' 'EQUALS' 'NEQUALS' 'GTE' 'LTE' 'GT' 'LT' 'SWAP'
+
+
+/*
+ *  GRAMMAR
+ *
+ */
+
 %ebnf 
-%start code
 %%
+
 input            : input line 
 line             (expr?) delimiter                
 expr             : thunk | forcing 
 
 /*
- * THUNKS
+ *   Thunks
  */
 
-thunk			 : SYMBOL | declaration | composition | object | array | closure
+thunk			 : SYMBOL | declaration | composition | thunk_literal
 
-/* attach a thunk to an event or a symbol */
-declaration      : SYMBOL (ASSIGN|DECLARE) (expr?) (WHEN | WHENEVER | BETWEEN) (expr?) DO (thunk?)
+declaration      : SYMBOL (ASSIGN|DECLARE) (expr?)
 
-/* note that these aren't technically 'operators', which in hi-script implies a force */
-composition      : (thunk?) comp thunk | comp (thunk?) | idx_into_array 
-comp             : COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT | DOT
-idx_into_array   : (thunk?) LBRKT (expr?) RBRKT 
+composition      : (thunk?) composer thunk | composer (thunk?) 
+                   /* composers AKA 'thunk operators'; they all have function-composition syntax, so 'composer' is apt */
+composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT | MEMBER | ISMEMBER
 
-/* these are all different ways of expressing a thunk literal */
-object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE | EMPTY
+thunk_literal    : object | array | closure | EMPTY
+object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE 
 array            : LBRKT  expr (COMMA expr)* RBRKT
 closure          : LPARN  expr* RPARN
 
 /*
- * FORCINGS
+ *   Forcings
  */
-forcing			  : atom | operator
+
+forcing			 : operator | literal
 
 operator         : unary | (expr?) binary (expr?)
 unary            : NOT | DEPTH | GESTALT | POP | PEEK | DROP | IN | OUT | FORCE
-binary           : EQUALS | NEQUALS | LT | LTE | GT | GTE |AND | IOR | XOR | SWAP 
-                 | PLUS | MINUS | TIMES | DVDBY | FORCEWITH | MEMBEROF
-atom             : boolean | number | string
+binary           : EQUALS | NEQUALS | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
+                 | PLUS | MINUS | TIMES | DVDBY | FORCEWITH 
+
+literal          : boolean | number | string
 string			 : Q  CHAR* Q | QQ CHAR* QQ
 number			 : INT | FLOAT
 boolean			 : T | F
+
+/* EOF */
 %%
