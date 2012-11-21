@@ -32,9 +32,9 @@
 %ebnf 
 %%
 
-input            : input line 
-line             : (expr?) delimiter                
-expr             : forcing | thunk 
+input            : input line
+line             : (expr?) delimiter
+expr             : forcing | thunk
 
 /*
  *   Forcings
@@ -58,9 +58,8 @@ constant        : E | PI | GOLDEN | IMAGINARY | INFINITY
  *   Thunks
  */
 
-thunk			     : lvalue | special | declaration | composition | thunk_literal
-lvalue           : SYMBOL
-special          : ELLIPSIS | GESTALT
+thunk			     : lvalue | declaration | composition | thunk_literal
+lvalue           : SYMBOL | ELLIPSIS | GESTALT
 
 declaration      : lvalue (ASSIGN|DECLARE) (expr?)
 
