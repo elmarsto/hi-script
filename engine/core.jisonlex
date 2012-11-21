@@ -27,7 +27,7 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 [?]         												return 'FORCEWITH'
 
 [:∘°]           								         return 'COMPOSE'
-[&]         												return 'CONCAT'
+[&]         												return 'GLUE'
 [|]           												return 'FILTER'
 [%]         												return 'REFLECT' 
 [@⊙]         												return 'JUST_STACK'
@@ -39,12 +39,12 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 [>»≫][~¬]     			         						return 'DROP'  
 ("><"|[⋈ ])    										   return 'SWAP'
 
-([x×·])       												return 'TIMES'
+("mult"|[×·])       										return 'TIMES'
 ("div"|[÷])   												return 'DIVIDES'
-[+]         												return 'PLUS'
-[-]         												return 'MINUS'
+[+]         												return 'PLUS'     /* also string concat */
+[-]         												return 'MINUS'    
 ("exp"|[^])   												return 'EXPONENT'
-("root"|[√])                                    return 'ROOT'
+("root"|[√])                                    return 'ROOT'    
 "mod"                                           return 'MODULO'
 "ln"                                            return 'LN'
 "log"                                           return 'LOG'
@@ -55,7 +55,10 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 (">="|">=="|[≥])                       			return 'GTE'
 ("=="|"==="|[≃])                       			return 'EQ'
 ("!="|"!=="|[≄])                       			return 'NEQ'
-("contains" | [∋∍] )  					   			return 'CONTAINS'
+("contains"|[∋∍])  					   			   return 'CONTAINS' /* works on substrings too */
+
+
+
 
 /* these are interpreted as bitwise operators (not logical operators) when at least one
    of the arguments is a string. e.g. 'not "true"' will give you back a string containing
@@ -70,6 +73,7 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 ("||"|[i]?"or"|[∩∧])                   			return 'IOR'
 ("xor"|[⨁⊻])		             						return 'XOR'
 
+
 [']          												return 'Q'
 ["]                										return 'QQ'
 "("         												return 'LPARN'
@@ -78,7 +82,7 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 "]"         												return 'RBRKT'
 "{"         												return 'LBRCE'
 "}"         												return 'RBRCE'
-[:]         												return 'COLON'
+":"         												return 'COLON'
 
 
 [$ß]          												return 'GESTALT' 

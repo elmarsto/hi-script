@@ -12,7 +12,7 @@
 %left  IMPLY
 %left  COMPOSE JUST_STACK JUST_SYMS FILTER REFLECT
 %left  OUT DROP
-%left  CONCAT
+%left  GLUE
 %left  ASSIGN 
 %left  AS
 %left  AND IOR XOR
@@ -63,7 +63,7 @@ symbol           : SYMBOL | ELLIPSIS | GESTALT /* last 2 cannot be assigned to *
 declaration      : SYMBOL (ASSIGN|DECLARE) (expr?)
 
 composition      : (thunk?) composer thunk  | composer (thunk?) 
-composer         : IMPLY | COMPOSE | CONCAT | JUST_STACK | JUST_SYMS | FILTER | REFLECT
+composer         : IMPLY | COMPOSE | GLUE | JUST_STACK | JUST_SYMS | FILTER | REFLECT
 
 thunk_literal    : object | array | closure | EMPTY
 object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE 
