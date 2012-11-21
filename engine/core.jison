@@ -14,7 +14,7 @@
 %left  OUT DROP
 %left  GLUE
 %left  ASSIGN 
-%left  AS
+%left  LIKE
 %left  AND IOR XOR
 %left  CONTAINS EQ NEQ GTE LTE GT LT 
 %left  PLUS MINUS
@@ -47,13 +47,12 @@ operator        : unary | (expr?) binary (expr?)
 unary           : NOT | DEPTH | POP | PEEK | DROP | IN | OUT | FORCE
 binary          : EQ | NEQ | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
                 | PLUS | MINUS | TIMES | DIVIDES | LN | LOG | MODULO | ROOT | EXPONENT 
-                | FORCEWITH | MEMBER | CONTAINS | AS
+                | FORCEWITH | MEMBER | CONTAINS | LIKE
 
-literal         : boolean | number | string 
+literal         : boolean | number | string
 string			 : Q  CHAR* Q | QQ CHAR* QQ
 number			 : NUMBER | E | PI | GOLDEN | IMAGINARY | INFINITY
 boolean			 : T | F
-
 /*
  *   Thunks
  */

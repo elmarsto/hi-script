@@ -2,25 +2,29 @@
  * in the range section? TODO research */
 SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
 SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
-
+HEXA  [A-Fa-f0-9]
 %%
 \s+          									         /* ignore whitespace */
 "--"\b.*   	           					   	      /* ignore comments TODO multiline */ 
 
+
+/*this is a mess. Simplify? How? Irreducible complexity? */
 ("-"?)([1-9]([0-9]*)|("0"+))(("."([0-9]+)([eE]([-+]?)([0-9]+))?)?)\b 	return 'NUMBER'
+
+"0x"{HEXA}({HEXA}*)                             return 'NUMBER'
  
 ("->"|[⊃⊇→])     									      return 'IMPLY'
 (":="|[≔⊢])        									   return 'DECLARE' 
 [=]                                             return 'ASSIGN'  
-("as"|[↝])                                      return 'AS'                       
+("like"|[↝])                                    return 'LIKE'                       
 
 /* 
- * Remember, 'as' works by taking an example atom and casting its first argument to the same
+ * Remember, 'like' works by taking an example atom and casting its first argument to the same
  * type as the example. e.g. 
  *
- * '"1" as 0 -- returns 1
- * '"true" as false -- returns true
- * '"true" as true  -- returns true 
+ * '"1" like 0 -- returns 1
+ * '"true" like false -- returns true
+ * '"true" like true  -- returns true 
 */
 
 [!⚡]         												return 'FORCE'
@@ -57,16 +61,6 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 ("!="|"!=="|[≄])                       			return 'NEQ'
 ("contains"|[∋∍])  					   			   return 'CONTAINS' /* works on substrings too */
 
-
-
-
-/* these are interpreted as bitwise operators (not logical operators) when at least one
-   of the arguments is a string. e.g. 'not "true"' will give you back a string containing
-   the bitwise negation of the UTF-8 string "true". Surprise! :/
-
-   It's trading off usability against comprhensiveness. Worth it, I think. 
-   To get the behaviour you'd expect (e.g. from C) you must first cast: 'not ("true" as true)'
- */ 
    
 ("not"|[¬~])												return 'NOT'
 ("&&"|"and"|[∪∨])		    								return 'AND'
