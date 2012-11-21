@@ -8,17 +8,21 @@
  *  ASSOCIATIVITY AND PRECEDENCE
  */
 
-%right DECLARE 
-%left  IN OUT DROP
-%left  IMPLY COMPOSE CONCAT MKARRAY MKOBJ FILTER REFLECT
-%left  NOT AND IOR XOR
-%left  ISMEMBER EQUALS NEQUALS GTE LTE GT LT 
+%right DECLARE
+%left  IMPLY
+%left  COMPOSE JUST_STACK JUST_SYMS FILTER REFLECT
+%left  OUT DROP
+%left  CONCAT
+%left  ASSIGN
+%left  AND IOR XOR
+%left  CONTAINS EQ NEQ GTE LTE GT LT 
 %left  PLUS MINUS
-%left  TIMES DVDBY
-%left  POP PEEK SWAP
-%left  MEMBER ASSIGN DEPTH
-%left  FORCE FORCEWITH
-
+%left  TIMES DIVIDES MODULO
+%left  EXPONENT ROOT
+%left  LN LOG
+%left  NOT           
+%left  FORCE FORCEWITH 
+%left  IN SWAP DEPTH POP PEEK 
 
 
 /*
@@ -40,14 +44,15 @@ forcing			 : operator | literal
 
 operator        : unary | (expr?) binary (expr?)
 unary           : NOT | DEPTH | POP | PEEK | DROP | IN | OUT | FORCE
-binary          : EQUALS | NEQUALS | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
-                | PLUS | MINUS | TIMES | DVDBY | FORCEWITH | MEMBER | ISMEMBER
+binary          : EQ | NEQ | LT | LTE | GT | GTE | AND | IOR | XOR | SWAP
+                | PLUS | MINUS | TIMES | DIVIDES | LN | LOG | MODULO | ROOT | EXPONENT 
+                | FORCEWITH | MEMBER | CONTAINS
 
 literal         : boolean | number | string | constant
 string			 : Q  CHAR* Q | QQ CHAR* QQ
-number			 : INT | FLOAT
+number			 : NUMBER
 boolean			 : T | F
-constant        : E | PI  
+constant        : E | PI | GOLDEN | IMAGINARY | INFINITY
 
 /*
  *   Thunks
@@ -60,7 +65,7 @@ special          : ELLIPSIS | GESTALT
 declaration      : lvalue (ASSIGN|DECLARE) (expr?)
 
 composition      : (thunk?) composer thunk  | composer (thunk?) 
-composer         : IMPLY | COMPOSE | CONCAT | MKARRAY | MKOBJ | FILTER | REFLECT
+composer         : IMPLY | COMPOSE | CONCAT | JUST_STACK | JUST_SYMS | FILTER | REFLECT
 
 thunk_literal    : object | array | closure | EMPTY
 object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE 
