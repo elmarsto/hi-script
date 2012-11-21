@@ -58,10 +58,9 @@ constant        : E | PI | GOLDEN | IMAGINARY | INFINITY
  *   Thunks
  */
 
-thunk			     : lvalue | declaration | composition | thunk_literal
-lvalue           : SYMBOL | ELLIPSIS | GESTALT
-
-declaration      : lvalue (ASSIGN|DECLARE) (expr?)
+thunk			     : symbol | declaration | composition | thunk_literal
+symbol           : SYMBOL | ELLIPSIS | GESTALT /* last 2 cannot be assigned to */ 
+declaration      : SYMBOL (ASSIGN|DECLARE) (expr?)
 
 composition      : (thunk?) composer thunk  | composer (thunk?) 
 composer         : IMPLY | COMPOSE | CONCAT | JUST_STACK | JUST_SYMS | FILTER | REFLECT
