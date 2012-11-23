@@ -2,16 +2,24 @@
  * in the range section? TODO research */
 SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
 SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
-HEXA  [A-Fa-f0-9]
+%x cblk /* comment block */
+%x q /* single-quoted string literal */
+%x qq /* double-quoted string literal */
+%s array
+%s object 
 %%
 \s+          									         /* ignore whitespace */
-"--"\b.*   	           					   	      /* ignore comments TODO multiline */ 
 
 
-/*this is a mess. Simplify? How? Irreducible complexity? */
-("-"?)([1-9]([0-9]*)|("0"+))(("."([0-9]+)([eE]([-+]?)([0-9]+))?)?)\b 	return 'NUMBER'
+"--".*   	           					   	      /* ignore inline comments */
+^"---".*                                        this.begin('cblk')
+<cblk>^"---".*                                  this.popState()
+<cblk>.*                                        /* ignore comment body */
 
-"0x"{HEXA}({HEXA}*)                             return 'NUMBER'
+
+/*this is a mess. Simplify? How? Irreducible complexity? Explicitness vs noise? */
+([1-9]([0-9]*)|"0")(("."([0-9]+)(([eE]([-+]?)([0-9]+))?))?)\b 	return 'NUMBER'
+
  
 ("->"|[⊃⊇→])     									      return 'IMPLY'
 (":="|[≔⊢])        									   return 'DECLARE' 
@@ -20,11 +28,7 @@ HEXA  [A-Fa-f0-9]
 
 /* 
  * Remember, 'like' works by taking an example atom and casting its first argument to the same
- * type as the example. e.g. 
- *
- * '"1" like 0 -- returns 1
- * '"true" like false -- returns true
- * '"true" like true  -- returns true 
+ * type as the example. e.g.  "1" like 0 -- returns 1
 */
 
 [!⚡]         												return 'FORCE'
@@ -36,7 +40,7 @@ HEXA  [A-Fa-f0-9]
 [%]         												return 'REFLECT' 
 [@⊙]         												return 'JUST_STACK'
 [*⋆★]                 									return 'JUST_SYMS'
-[.]                                    			return 'MEMBER'
+[.]                                    			return 'JUST_MEMBER'
 
 ("<<"|[«≪])    											return 'IN'   
 (">>"|[»≫])                            			return 'OUT'  
@@ -47,7 +51,7 @@ HEXA  [A-Fa-f0-9]
 ("div"|[÷])   												return 'DIVIDES'
 [+]         												return 'PLUS'     /* also string concat */
 [-]         												return 'MINUS'    
-("exp"|[^])   												return 'EXPONENT'
+("pow"|[^])   												return 'POW'
 ("root"|[√])                                    return 'ROOT'    
 "mod"                                           return 'MODULO'
 "ln"                                            return 'LN'
@@ -68,32 +72,32 @@ HEXA  [A-Fa-f0-9]
 ("xor"|[⨁⊻])		             						return 'XOR'
 
 
-[']          												return 'Q'
-["]                										return 'QQ'
 "("         												return 'LPARN'
 ")"         												return 'RPARN' 
 "["         												return 'LBRKT'
 "]"         												return 'RBRKT'
 "{"         												return 'LBRCE'
 "}"         												return 'RBRCE'
-":"         												return 'COLON'
 
 
 [$ß]          												return 'GESTALT' 
 ("..."  |[…])	      									return 'ELLIPSIS'
 ("{}"|"()"|[∅])   										return 'EMPTY'
-("true" |[⊤])    											return 'T'
-("false"|[⊥])   											return 'F'
-[ℯ]                                             return 'E'
-[π]                                             return 'PI'
-[∞]                                             return 'INFINITY'
-[ⅈι]                                            return 'IMAGINARY'
-[φ]                                             return 'GOLDEN'
+("false" | "true" |[⊥⊤])    							return 'BOOLEAN'
+[ℯπ∞ιφ]                                         return 'CONSTANT'
 
-{SYM1}({SYMN}*)\b 										return 'SYMBOL'
+{SYM1}({SYMN}*)\b 										return 'LVALUE'
 
-[,]         												return 'COMMA'
+<array,object>[,]    									return 'COMMA'
+<array,object>[:]                               return 'COLON' 
+
 [\n;]                                           return 'DELIMITER'
+
+(["])                                           this.begin('qq')
+(['])                                           this.begin('q')
+<qq>([^\\]["])                                  this.popState()
+<q>([^\\]['])                                   this.popState()
+<qq,q>(.*)                                      return 'STRING'
 
 <<EOF>>     												return 'EOF'
 
