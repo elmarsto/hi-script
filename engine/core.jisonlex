@@ -47,7 +47,7 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 [>»≫][~¬]     			         						return 'DROP'  
 ("><"|[⋈ ])    										   return 'SWAP'
 
-("mult"|[×·])       										return 'TIMES'
+("times"|[×·])       										return 'TIMES'
 ("div"|[÷])   												return 'DIVIDES'
 [+]         												return 'PLUS'     /* also string concat */
 [-]         												return 'MINUS'    
@@ -57,19 +57,20 @@ SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
 "ln"                                            return 'LN'
 "log"                                           return 'LOG'
 
-[<<﹤＜]                               			return 'LT'
+("kin"|[≋])                                		return 'KIN'
+[<<]   	                            			return 'LT'
 ("<="|"<=="|[≤])                       			return 'LTE'
-[>>﹥＞]                               			return 'GT'
+[>>] 	                              			return 'GT'
 (">="|">=="|[≥])                       			return 'GTE'
 ("=="|"==="|[≃])                       			return 'EQ'
 ("!="|"!=="|[≄])                       			return 'NEQ'
-("contains"|[∋∍])  					   			   return 'CONTAINS' /* works on substrings too */
+("contains"|[∋∍])  					   			return 'CONTAINS' /* works on substrings too */
 
    
-("not"|[¬~])												return 'NOT'
-("&&"|"and"|[∪∨])		    								return 'AND'
+("not"|[¬~])									return 'NOT'
+("&&"|"and"|[∪∨])		    					return 'AND'
 ("||"|[i]?"or"|[∩∧])                   			return 'IOR'
-("xor"|[⨁⊻])		             						return 'XOR'
+("xor"|[⨁⊻])		             		 	 return 'XOR'
 
 
 "("         												return 'LPARN'

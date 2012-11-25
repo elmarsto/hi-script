@@ -10,15 +10,13 @@
 
 %{
    var core = require 'core',
-   hi = core.monad.make(),
+   hi = core.make(),
    logic = hi.logic,/*and, both ors*/
    io    = hi.io,   /*io.stack*/
    make  = hi.make, /*generators*/
-   math  = hi.math, /*arithmetic*/ 
    stack = hi.stack,/*stack*/
    sym   = hi.sym,  /*symbol table*/
-   trans = hi.trans,/*transforms*/
-   test  = hi.test; /*equality, membership, magnitude...*/
+   trans = hi.trans;/*transforms*/
 %}
 
 
@@ -34,7 +32,7 @@
 %left  ASSIGN 
 %left  LIKE
 %left  AND IOR XOR
-%left  CONTAINS EQ NEQ GTE LTE GT LT 
+%left  KIN CONTAINS EQ NEQ GTE LTE GT LT 
 %left  PLUS MINUS
 %left  TIMES DIVIDES MODULO
 %left  POW ROOT
@@ -55,8 +53,8 @@
 
 input            : input line | input EOF
 line             : (expr?) delimiter
-expr             : forcing -> stack.push($1())
-                 | thunk   -> stack.push($1)
+expr             : forcing -> hi($1())
+                 | thunk   -> hi($1)
 
 /*
  *   Forcings
@@ -75,34 +73,35 @@ unary           : NOT         -> logic.n
                 | OUT         -> function() { return io.push(stack.pop());  }
                 | FORCE       -> function() { return x; } /* identity function (operator semantics already imply forcing) */
 binary          : FORCEWITH   -> function(x,y) { return trans.compose(y,x); }  /* recall x?y == y:x */
-                | EQ          -> test.eq
-                | NEQ         -> test.neq
-                | LT          -> test.lt
-                | LTE         -> test.lte
-                | GT          -> test.gt
-                | GTE         -> test.gte
-                | CONTAINS    -> test.contains
+                | EQ          -> logic.eq
+                | NEQ         -> logic.neq
+                | LT          -> logic.lt
+                | LTE         -> logic.lte
+                | GT          -> logic.gt
+                | GTE         -> logic.gte
+                | CONTAINS    -> logic.contains
                 | AND         -> logic.a
                 | IOR         -> logic.o
                 | XOR         -> logic.x
-                | SWAP        -> stack.swap
-                | PLUS        -> math.plus
-                | MINUS       -> math.minus
-                | TIMES       -> math.times
-                | DIVIDES     -> math.divides
-                | LN          -> math.ln
-                | LOG         -> math.log
-                | MODULO      -> math.modulo
-                | ROOT        -> math.root
-                | POW         -> math.pow
-                | JUST_MEMBER -> trans.member
+                | SWAP        -> trans.swap
+                | PLUS        -> trans.math.plus
+                | MINUS       -> trans.math.minus
+                | TIMES       -> trans.math.times
+                | DIVIDES     -> trans.math.div
+                | LN          -> trans.math.ln
+                | LOG         -> trans.math.log
+                | MODULO      -> trans.math.mod
+                | ROOT        -> trans.math.root
+                | POW         -> trans.math.pow
+                | JUST_MEMBER -> trans.just.member
                 | LIKE        -> trans.like
+                | KIN         -> logic.kin
 
 literal         : number | boolean | string 
 number			 : '-' number %prec UMINUS -> trans.uminus($2) 
-                | CONSTANT -> make.constant($1)
+                | CONSTANT -> core.constant($1)
                 | NUMBER   -> make.number($1)
-boolean			 : (T|F)    -> make.boolean($1)
+boolean			 : BOOLEAN  -> make.bool($1)
 string			 : STRING   -> make.string($1)
 /*
  *   Thunks
@@ -110,19 +109,20 @@ string			 : STRING   -> make.string($1)
 
 thunk			     : symbol | declaration | composition | thunk_literal
 symbol           : LVALUE   -> sym($1)
-                 | ELLIPSIS -> sym.lipsis
-                 | GESTALT  -> sym.gestalt
+                 | ELLIPSIS -> stack
+                 | GESTALT  -> hi
 declaration      : LVALUE (ASSIGN|DECLARE) (expr?) -> sym($1,$3)
 
-composition      : (thunk?) composer thunk -> $2($1,$3)
-                 | composer (thunk?) -> $1($2)
-composer         : IMPLY      -> trans.imply
+composition      : (thunk?) composer thunk -> trans($2,$1,$3)
+                 | composer (thunk?)       -> trans($1,$2)
+composer         : IMPLY      -> trans.compose.imply
                  | COMPOSE    -> trans.compose
-                 | GLUE       -> trans.glue
-                 | JUST_STACK -> trans.syms
-                 | JUST_SYMS  -> trans.stack
-                 | FILTER     -> trans.filter
-                 | REFLECT    -> trans.reflect
+                 | GLUE       -> trans.compose.glue
+                 | JUST_STACK -> trans.just.syms
+                 | JUST_SYMS  -> trans.just.stack
+                 | FILTER     -> trans.just
+                 | REFLECT    -> trans.compose.reflect //TODO reorg and cleanup
+                 | 
 
 thunk_literal    : object | array | closure | EMPTY
 object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE   -> make.object($expr1,$expr2,$expr3,$expr4)
@@ -132,4 +132,4 @@ closure          : LPARN  expr* RPARN                                           
 
 
 /* EOF */
-%%D
+%%
