@@ -6,53 +6,64 @@
  */
 
 
-var mixtress;
+var mixtress = {}; 
 
 (function(){
 
+//this private function produces a real array from an arguments object
+_args = function(the_arguments) {
+         var ret = [];
+         for (var a in the_arguments) { ret.push(a); }
+         return ret;
+}
+
+
 mixtress = function() {
-	var target = arguments.shift(),
-	    mixins = arguments;
+   var args   = _args(arguments),
+      target =  args.shift();
 
-	for (var mx in mixins) { 
-		for (var k in mx) { target[k] = mx[k]; } 
-	}
-
+   for (var mx in args) { 
+      for (var k in mx) {
+            switch(k) {
+               case '.': target[k] = mx[k].bind(target[k]); break; 
+               default:  target[k] = mx[k]; //shallow copy, and naive about inherited props
+            }
+      } 
+   }
+   return target;
 };
 
 
 mixtress.into = function() {
-	var mixin  = arguments.shift(),
-       targets = arguments;
-
-
-	for (var t in targets) {
-			mixtress(t,mixin);
-	}
+    var args   = _args(arguments),
+       mixin  =  args.shift();
+   for (var t in args) { t = mixtress(t,mixin); }
 }
 
 
 /* for completeness */
-mixtress.above  	= function() { return mixtress.apply(mixtress,arguments); };
-mixtress.into.above = function() { return mixtress.into.apply(mixtress,arguments); };
+mixtress.above    = function() { return mixtress.apply(mixtress,_args(arguments)); };
+mixtress.into.above = function() { return mixtress.into.apply(mixtress,_args(arguments)); };
 
 
-/* when composed, 
- * this private func produces a function to reverse the argument order of a function */
-var _belowify = function() {
-	var	o = [];
-	while (var i = arguments.pop()) { o.push(i); }
-	return this(o);		
+/* masala... */
+var _neath = function() {
+   var   args = _args(arguments), 
+      newb = {},
+      subj = args[0];
+   newb.prototype = subj.prototype; //make empty object of the same type as original subject
+   args.push(newb);                 //add to end of array
+   args.reverse();                  //reverse array. newb is now the new
+                                    //subject. Properties of subj copied as last mixin. 
+                                    //TODO function rebinding; until then,
+                                    //don't use directly on a function! 
+                                    //(properties of an object which contain functions are fine)
+   return this.apply(this,args);
 }
 
-/* like this, see? */
+/* ...for currying, like this, see? */
 
-mixtress.beneath = function() {
-	return _belowify.apply(mixtress,arguments);
-}
-
-mixtress.into.beneath = function() {
-	return _belowify.apply(mixtress.into,arguments);
-}
+mixtress.beneath      = function() { return _neath.apply(mixtress,arguments); }
+mixtress.into.beneath = function() { return _neath.apply(mixtress.into,arguments); }
 
 })();
