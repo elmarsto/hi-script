@@ -10,13 +10,13 @@
 
 %{
    var core = require 'core',
-   hi = core.make(),
-   logic = hi.logic,/*and, both ors*/
-   io    = hi.io,   /*io.stack*/
-   make  = hi.make, /*generators*/
-   stack = hi.stack,/*stack*/
-   sym   = hi.sym,  /*symbol table*/
-   trans = hi.trans;/*transforms*/
+   hi       = core.hi(),
+   logic    = hi.logic,/*and, both ors*/
+   io       = hi.io,   /*io.stack*/
+   make     = hi.make, /*generators*/
+   stack    = hi.stack,/*stack*/
+   sym      = hi.sym,  /*symbol table*/
+   trans    = hi.trans;/*transforms*/
 %}
 
 
@@ -60,7 +60,7 @@ expr             : forcing -> hi($1())
  *   Forcings
  */
 
-forcing			 : operator | literal
+forcing      : operator | literal
 
 operator        : unary (expr?)           -> trans($unary,$expr)
                 | (expr?) binary (expr?)  -> trans($binary,$expr1,$expr2)
@@ -98,36 +98,40 @@ binary          : FORCEWITH   -> function(x,y) { return trans.compose(y,x); }  /
                 | KIN         -> logic.kin
 
 literal         : number | boolean | string 
-number			 : '-' number %prec UMINUS -> trans.uminus($2) 
+number       : '-' number %prec UMINUS -> trans.uminus($2) 
                 | CONSTANT -> core.constant($1)
                 | NUMBER   -> make.number($1)
-boolean			 : BOOLEAN  -> make.bool($1)
-string			 : STRING   -> make.string($1)
+boolean      : BOOLEAN  -> make.bool($1)
+string       : STRING   -> make.string($1)
 /*
  *   Thunks
  */
 
-thunk			     : symbol | declaration | composition | thunk_literal
+thunk          : symbol | declaration | composition | thunk_literal
 symbol           : LVALUE   -> sym($1)
                  | ELLIPSIS -> stack
                  | GESTALT  -> hi
+
 declaration      : LVALUE (ASSIGN|DECLARE) (expr?) -> sym($1,$3)
 
 composition      : (thunk?) composer thunk -> trans($2,$1,$3)
                  | composer (thunk?)       -> trans($1,$2)
-composer         : IMPLY      -> trans.compose.imply
-                 | COMPOSE    -> trans.compose
+composer         : COMPOSE    -> trans.compose
+                 | IMPLY      -> trans.compose.imply
                  | GLUE       -> trans.compose.glue
+                 | REFLECT    -> trans.compose.reflect 
                  | JUST_STACK -> trans.just.syms
                  | JUST_SYMS  -> trans.just.stack
                  | FILTER     -> trans.just
-                 | REFLECT    -> trans.compose.reflect //TODO reorg and cleanup
-                 | 
 
-thunk_literal    : object | array | closure | EMPTY
-object           : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE   -> make.object($expr1,$expr2,$expr3,$expr4)
-array            : LBRKT  expr (COMMA expr)* RBRKT                              -> make.array($expr1,$expr2)
-closure          : LPARN  expr* RPARN                                           -> make($expr)
+thunk_literal     : object | array | closure 
+object            : LBRCE (expr  COLON expr ((COMMA expr COLON expr)*))? RBRCE   -> make.object($expr1,$expr2,$expr3,$expr4)
+array             : LBRKT  expr (COMMA expr)* RBRKT                              -> make.array($expr1,$expr2)
+closure           : empty-closure | inline-closure | multiline-closure
+empty-closure     : ( LPARN RPARN | EMPTY )                                      -> make()
+inline-closure    : LPARN  expr+ RPARN                                           -> make($expr)
+multiline-closure : LPARN expr*                                                  -> hi.make.begin($expr)
+                  | expr* RPARN                                                  -> hi.make.end($expr)
 
 
 
