@@ -8,21 +8,20 @@ require ('mixtress.js')
 /* TODO mixtress api
  * mixtress(...) or for some mixtress-produced object, .mix(...)
   '.' on skeletons is the func of a func obj (so e.g. {'.': function(){}) mixed onto .trans makes .trans() )
-  .mix on all produced objects
-  x.mix(y,y2..) or mixtress(x,y) sucessively copies y, y2... onto x
-  y.mix.into(x, x2, ...) copies y onto  x , x1, ...
+  mixtress(x,y) sucessively copies y, y2... onto x
+  mixtress.into(x, x2, ...) copies y onto  x , x1, ...
 
-  x.mix.above(y) and y.mix.into.above(x) both make explicit that in collision, the y-elts are kept, x-elts discarded (default)
-  x.mix.below(y) and y.mix.into.below(x) both have the opposite behaviour, rebasing x on y.
+  mixtress.above(x,y) and mixtress.into.above(y,x) both make explicit that in collision, the y-elts are kept, x-elts discarded (default)
+  mixtress.below(x,y) and mixtress.into.below(y,x) both have the opposite behaviour, rebasing x on y.
 */
 
 /* step one: declare the namespace object. */ 
-core = mixtress({ 
-                make: {
-                        '.': function() {}, //override default constructor to generate instances, not copies of namespace
-                        bool: function (x) {}
-                        number: function (x) {}
-                        string: function (x) {}
+core = { 
+                make: { /* low-level routines to create internal data structures. */
+                        '.': function() {}, 
+                        bool: function (x) {},
+                        number: function (x) {},
+                        string: function (x) {},
                         atom: function(x) {},
                         monad: function(x) {}
                        },
@@ -30,20 +29,20 @@ core = mixtress({
                 type: {
                         '.': function() {},
                         entity: {
-                                   is: function() {},
+                                 is: function() {},
                                 },
                         atom: { 
-                                has: { value: function() {}, },
+                                 has: { value: function() {}, },
                               },
                         symbol: {
-                                is: {
+                                 is: {
                                         declared: function() {},
                                         empty: function() {},
                                     }
-                                has: { 
+                                 has: { 
                                         referent: function() {},
                                         literal: function() {},
-                                },
+                                 },
                         },
                         monad: { //TODO refactor into separate file
                             io: {},
@@ -53,10 +52,10 @@ core = mixtress({
                                like: function() {},
                                swap: function() {},
                                just:{
+                                       '.': function() {}, 
                                        member: function() {},
                                        stack: function() {},
-                                       symbols: function() {},
-
+                                       symbols: function() {}
                                      },
                                compose: {
                                        reflect: function() {},
@@ -78,6 +77,7 @@ core = mixtress({
                                        ln: function() {},
                                   }
                                logic: {
+                                      n:  function() {},
                                       eq: function() {},
                                       neq: function() {},
                                       lte: function() {},
@@ -90,12 +90,14 @@ core = mixtress({
                               } //trans
                               sym:  function() {},
                               make: { 
+                                      '.':  function() {},
                                       bool: function() {},
                                       string: function() {},
                                       number: function() {},
                                       object: function() {},
                                       array: function() {},
-                                  } 
+                                  },
+                             bye: function() {}
                           } //monad
                         stack: {
                                    has { depth: function() {} },
@@ -142,12 +144,12 @@ core = mixtress({
                                      },
                                  }
                         }//type
-                }); 
+};  //core
   
 
 
 /* Step II: Use the mixtress lib to use mixins to provide cheap inheritancelike behaviours and properties */
-mixtress.into.above({ is: { forced: true } },
+mixtress.into.above( { is: { forced: true } },
                     core.type.monad.trans.math.plus,
                     core.type.monad.trans.math.minus,
                     core.type.monad.trans.math.uminus,
@@ -176,29 +178,29 @@ mixtress.into.above({ is: { forced: true } },
                     core.type.stack.pop,
                     core.type.stack.peek,
                     core.type.stack.depth,
-                    core.type.atom);
+                    core.type.atom );
 
-mixtress.into.above({ is: { forced: false } },
+mixtress.into.above( { is: { forced: false } },
                 core.type.monad,
                 core.type.monad.trans.compose,
                 core.type.monad.trans.compose.reflect,
                 core.type.monad.trans.compose.imply,
                 core.type.monad.trans.compose.glue,
-                core.type.monad.trans.just);
+                core.type.monad.trans.just );
 
 //atoms, symbols, stacks and monads are entities
-core.type.entity.mix.into.beneath( core.type.constant,
-                                   core.type.atom,
-                                   core.type.symbol,
-                                   core.type.stack,
-                                   core.type.monad);
+mixtress.into.beneath( core.type.entity,
+                       core.type.constant,
+                       core.type.atom,
+                       core.type.symbol,
+                       core.type.stack,
+                       core.type.monad );
 
 //Numbers, strings, and booleans are atoms
-core.type.atom.mix.into.beneath( core.type.number,
-                                 core.type.string,
-                                 core.type.bool);
+mixtress.into.beneath( core.type.atom, 
+                       core.type.number, core.type.string, core.type.bool );
 
 //Transforms and symbols are monads
-core.type.monad.mix.into.beneath(core.type.symbol,
-                                 core.type.transform);
+mixtress.into.beneath( core.type.monad, 
+                       core.type.symbol, core.type.transform );
 
