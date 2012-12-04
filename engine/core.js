@@ -1,70 +1,88 @@
 
 //TODO break this up into multiple files, it's way too long
-//TODO write mixtress.js
 //TODO finish stubbing out the parser
 
-mixtress = require ('../mixtress.js')
 var core = {};
 
 (function() {
 
+/* utility function takes a function and a JSON object and returns something that is both */
+var _funcy = function(f,j) {
+    var ff = function() { return f.apply(this,arguments); }; // 'forwarding function'
+    for (p in j) {     
+      if (j.hasOwnProperty(p) && 
+          j.isEnumerable(p))
+        ff[p] = j[p];
+    }
+    return ff;
+}; 
+
 /* step one: declare the namespace object. */ 
 core = { 
-        make:  mixtress.funcy( function () {}, 
+        make:  _funcy( 
+          function () {}, 
           { 
               bool:   function () { return this.type.bool.make.apply(this,arguments);   },
               number: function () { return this.type.number.make.apply(this,arguments); },
               string: function () { return this.type.string.make.apply(this,arguments); },
               atom:   function () { return this.type.atom.make.apply(this,arguments);   },
               monad:  function () { return this.type.monad.make.apply(this,arguments);  } 
-          }),
+          }
+        ),
         constant: function (x){},
         type: {
             entity: { iz: function() { return true; }, },
             symbol: {
                 iz:  { symbol: true }
-                haz:  { referent: function() {}, 
-                    literal: function() {} 
-                    },
+                haz:  { 
+                        signifier:  function() {}, 
+                        signified:  function() {} 
+                      },
             },
-            atom:   { iz: { atom: true }, 
-                 haz: { value: function() {}, }, },
+            atom:  { 
+                  iz: { atom: true }, 
+                 haz: { value: function() {}, } 
+            },
             monad: { 
               iz:   { monad: true },
-              io:   {},
+              io:     {},
               stack:  {},
-              trans:  mixtress.funcy( 
+              trans:  _funcy( 
                function () {}, 
-               { like: function() {},
+               { 
+                 like: function() {},
                  swap: function() {},
-                 just:  mixtress.funcy( 
+                 just:  _funcy( 
                     function () {}, 
                     {
                      member:  function() {},
                      stack:   function() {},
                      symbols: function() {}
-                   },
-                 compose: mixtress.funcy( 
+                   }
+                 ),
+                 compose: _funcy( 
                    function () {}, 
                    { 
                      reflect: function() {},
                      imply:   function() {},
-                     glue:  function() {},
-                   },
+                     glue:    function() {},
+                   }
+                 ),
                  math: {
                      log:   function() {},
                      ln:    function() {},
                      pow:   function() {},
                      root:  function() {},
-                     uminus:  function() {},
-                     minus:   function() {},
-                     times:   function() {},
+                     uminus:function() {},
+                     minus: function() {},
+                     times: function() {},
                      div:   function() {},
                      mod:   function() {},
                      log:   function() {},
                      ln:    function() {},
                   } //math
-                }), //trans
+                }
+              ), //trans
               logic: {
                   n:        function() {},
                   eq:       function() {},
@@ -73,29 +91,30 @@ core = {
                   gte:      function() {},
                   gt :      function() {},
                   lt :      function() {},
-                  contains:   function() {},
+                  contains: function() {},
                   kin:      function() {}, 
                 } //logic
                 sym:  function() {},
-                make: mixtress.funcy( 
+                make: _funcy( 
                     function() {
-                      var out = {}; 
-                      out.prototype = core.type.monad;
-                      out.io        = core.type.stack.make(/*TODO*/);
-                      out.stack     = core.type.stack.make();
-                      return out;
+                      var ret = {}; 
+                      ret.prototype = core.type.monad;
+                      ret.io        = core.type.stack.make(/*TODO*/);
+                      ret.stack     = core.type.stack.make();
+                      return ret;
                     },{ 
-                    bool: function () 
-                      { return core.type.bool.make.apply(this,arguments); },
-                    string: function() {},
-                      { return core.type.string.make.apply(this,arguments); },
-                    number: function() {},
-                      { return core.type.number.make.apply(this,arguments); },
-                    object: function() {},
-                      { return core.type.object.make.apply(this,arguments); },
-                    array: function() {},
-                      { return core.type.array.make.apply(this,arguments); },
-                    }),
+                    bool:    
+                      function() { return core.type.bool.make.apply(this,arguments); },
+                    string:
+                      function() { return core.type.string.make.apply(this,arguments); },
+                    number: 
+                      function() { return core.type.number.make.apply(this,arguments); },
+                    object: 
+                      function() { return core.type.object.make.apply(this,arguments); },
+                    array: 
+                      function() { return core.type.array.make.apply(this,arguments); },
+                    }
+                ),
                bye: function() {}
              }, //monad
             stack: {
@@ -130,62 +149,22 @@ core = {
   
 
 
-/* Use mixins to add uniform substructures */
-mixtress.into( { iz: { forced: true } },
-        core.type.monad.trans.math.plus,
-        core.type.monad.trans.math.minus,
-        core.type.monad.trans.math.uminus,
-        core.type.monad.trans.math.times,
-        core.type.monad.trans.math.div,
-        core.type.monad.trans.math.mod,
-        core.type.monad.trans.math.log,
-        core.type.monad.trans.math.ln,
-        core.type.monad.trans.math.root,
-        core.type.monad.trans.math.pow,
-        core.type.monad.trans.swap,
-        core.type.monad.trans.like,
-        core.type.monad.trans.just.member,
-        core.type.monad.logic.eq,
-        core.type.monad.logic.neq,
-        core.type.monad.logic.gt,
-        core.type.monad.logic.lt,
-        core.type.monad.logic.lte,
-        core.type.monad.logic.gte,
-        core.type.monad.logic.contains
-        core.type.monad.logic.kin,
-        core.type.stack.drop,
-        core.type.stack.push,
-        core.type.stack.pop,
-        core.type.stack.peek,
-        core.type.stack.depth,
-        core.type.atom );
-
-mixtress.into( { iz: { forced: false } },
-        core.type.monad,
-        core.type.monad.trans.compose,
-        core.type.monad.trans.compose.reflect,
-        core.type.monad.trans.compose.imply,
-        core.type.monad.trans.compose.glue,
-        core.type.monad.trans.just.symbols,
-        core.type.moand.trans.just.stack,
-        core.type.monad.trans.just );
-
-/* I could use prototypical inheritance for the next three, but ATM we're doing it with
- * mixins for consistency with the above pattern (borrowed from 
- * https://speakerdeck.com/anguscroll/how-we-learned-to-stop-worrying-and-love-javascript) */
-
+//utility function for twiddling inheritance
+var _adopt = function() {
+  var args = _args(arguments),
+      mom  = args.shift(), //mom is first argument 
+      kids = args;         //all kids come next
+      
+      kids.forEach(function(k) { k.prototype = mom; }  
+}
 
 //atoms, symbols, stacks and monads are entities
-mixtress.into.beneath( core.type.entity,
-             core.type.constant, core.type.atom, core.type.symbol,
-             core.type.stack, core.type.monad );
+_adopt(core.type.entity, core.type.atom, core.type.symbol, core.type.stack, core.type.monad);
 
 //Numbers, strings, and booleans are atoms
-mixtress.into.beneath( core.type.atom, 
-             core.type.number, core.type.string, core.type.bool );
+_adopt(core.type.atom, core.type.number, core.type.string, core.type.bool );
 
 //Transforms and symbols are monads
-mixtress.into.beneath( core.type.monad, 
-             core.type.symbol, core.type.transform );
+_adopt(core.type.monad, core.type.symbol, core.type.transform );
 
 )();
