@@ -5,7 +5,7 @@
  */
 
 
-const jsonselect = require('JSONSelect');
+const jQuery = require('jQuery');
 var mixtress = {}; 
 
 (function(){
@@ -19,20 +19,13 @@ _args = function(the_arguments) {
 
 
 mixtress = function() {
+   /* step one: get jQuery to do the heavy lifting */
    var target = jQuery.extend.apply(jQuery,arguments);
-   var mixins   = _args(arguments).slice(1);
-
-   jsel.forEach(":has(:root > '.')", target, function(elt) {
-                  var f = elt['.'];
-                  var n = function() { return f.apply(this,arguments); };
-                  elt['.'] = undefined;
-                  elt = jQuery.extend(n,elt); /* this works, because elt is a reference, right? */
-                  /*discard return value, because it's ignored*/
-                  /*WARNING BROKEN because this dynamically changes the tree in ways that jsel.forEach is unaware of; FIXME */
-              });
-
+   /* no step two! */
    return target;
 };
+
+
 
 
 mixtress.into = function() {
@@ -71,5 +64,22 @@ var _neath = function() {
 
 mixtress.beneath    = function() { return _neath.apply(mixtress,arguments); }
 mixtress.into.beneath = function() { return _neath.apply(mixtress.into,arguments); }
+
+
+/* takes a function and a JSON object and returns something that is both */
+mixtress.funcy = function(f,j) {
+    ff = function() { return f.apply(this,arguments); }; // 'forwarding function'
+    // return mixtress(ff,j); //WRONG. we want a *shallow* copy.  
+    // so let's DIY!
+    
+    for (p in j) {            //RIGHT
+      if (j.hasOwnProperty(p) && 
+          j.isEnumerable(p))
+        ff[p] = j[p];
+    }
+    
+    return ff;
+} 
+
 
 })();
