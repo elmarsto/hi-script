@@ -20,13 +20,6 @@ var core = {
 		constant: function (x){},
 		type: {
 			entity: { iz: function() { return true; }, },
-			symbol: {
-				iz:  { symbol: true }
-				haz:  { 
-						signifier:	function() {}, 
-						signified:	function() {} 
-					  },
-			},
 			atom:  { 
 				  iz: { atom: true }, 
 				 haz: { value: function() {}, } 
@@ -108,9 +101,6 @@ var core = {
 				drop: function() {},
 				peek: function() {},
 			   },
-			transform: {
-				  iz { forced: function() {} },
-			   },
 			number: {
 				iz: { number: true,},
 				plus:  function() {},
@@ -122,7 +112,7 @@ var core = {
 				ln	 : function() {},
 				pow  : function() {},
 				root : function() {}
-			  },
+			},
 			string: {
 				haz: { length: function() {}, },
 				iz:  { string: true, interpolated: function() {} },
@@ -138,17 +128,15 @@ var _adopt = function() {
 	  mom  = args.shift(), //mom is first argument 
 	  kids = args;		   //all kids come next
 	  
-	  kids.forEach(function(k) { k.__proto__ = mom; }  
+	  kids.forEach(function(k) { k.__proto__ = mom; });
 };
 
 //atoms, symbols, stacks and monads are entities
-_adopt(core.type.entity, core.type.atom, core.type.symbol, core.type.stack, core.type.monad);
+_adopt(core.type.entity, core.type.atom, core.type.stack, core.type.monad);
 
 //Numbers, strings, and booleans are atoms
-_adopt(core.type.atom, core.type.number, core.type.string, core.type.bool );
+_adopt(core.type.atom, core.type.number, core.type.string, core.type.bool);
 
-//Transforms and symbols are monads
-_adopt(core.type.monad, core.type.symbol, core.type.transform );
 
 return core;
 })();
