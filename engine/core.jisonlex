@@ -7,7 +7,7 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 %x q /* single-quoted string literal */
 %x qq /* double-quoted string literal */
 %s array
-%s object 
+%s object
 %%
 
 /* First, throw out whitespace. */
@@ -20,38 +20,39 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 <cblk>^"---"$                                  this.popState()    /* end    comment blk*/
 <cblk>.*                                                          /* ignore comment blk*/
 
-/* Identify delimiter */ 
+/* Identify delimiter */
 [\n;]                                           return 'DELIMITER'
 
-/* Identify keywords and primitives */ 
+/* Identify keywords and primitives */
 ("->"|[⊃⊇→])                                    return 'IMPLY'
-(":="|[≔⊢])                                     return 'DECLARE' 
-[=]                                             return 'ASSIGN'  
+(":="|[≔⊢])                                     return 'DECLARE'
+[=]                                             return 'ASSIGN'
         /* Remember, 'like' works by taking an example atom and casting its
          * first argument to the same type as the example. e.g.  "1" like 0 -- returns 1 */
-("like"|[↝])                                    return 'LIKE'                       
-[!⚡]                                            return 'FORCE'
+("like"|[↝])                                    return 'LIKE'
+[!]                                             return 'FORCE'
+("!!"|[⚡])                                      return 'FORCEALL'
 [?]                                             return 'FORCEWITH'
 
 [:∘°]                                           return 'COMPOSE'
 [&]                                             return 'GLUE'
 [|]                                             return 'FILTER'
-[%]                                             return 'REFLECT' 
+[%]                                             return 'REFLECT'
 [@⊙]                                            return 'JUST_STACK'
 [*⋆★]                                           return 'JUST_SYMS'
 [.]                                             return 'JUST_MEMBER'
 
-("<<"|[«≪])                                     return 'IN'   
-(">>"|[»≫])                                     return 'OUT'  
-[>»≫][~¬]                                       return 'DROP'  
+("<<"|[«≪])                                     return 'RECV'
+(">>"|[»≫])                                     return 'SEND'
+[>»≫][~¬]                                       return 'DROP'
 ("><"|[⋈ ])                                     return 'SWAP'
 
 ("times"|[×·])                                  return 'TIMES'
 ("div"|[÷])                                     return 'DIVIDES'
 [+]                                             return 'PLUS'     /* also string concat */
-[-]                                             return 'MINUS'    
+[-]                                             return 'MINUS'
 ("pow"|[^])                                     return 'POW'
-("root"|[√])                                    return 'ROOT'    
+("root"|[√])                                    return 'ROOT'
 "mod"                                           return 'MODULO'
 "ln"                                            return 'LN'
 "log"                                           return 'LOG'
@@ -71,15 +72,15 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 ("xor"|[⨁⊻])                                    return 'XOR'
 
 /* Identify special names */
-[$ß]                                          return 'GESTALT' 
+[$ß]                                          return 'GESTALT'
 ("..."  |[…])                                 return 'ELLIPSIS'
 ("{}"|"()"|[∅])                               return 'EMPTY'
 [ℯπ∞ιφ]                                       return 'CONSTANT'
 
-/* Identify structuring tokens */ 
+/* Identify structuring tokens */
 
 "("                                            return 'LPARN'
-")"                                            return 'RPARN' 
+")"                                            return 'RPARN'
 "["                                            return 'LBRKT'
 "]"                                            return 'RBRKT'
 "{"                                            return 'LBRCE'
@@ -103,17 +104,17 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
                        * complexity? Explicitness vs noise? */
 ([1-9]([0-9]*)|"0")(("."([0-9]+)(([eE]([-+]?)([0-9]+))?))?)\b   return 'NUMBER'
 
-/* Identify Strings */ 
+/* Identify Strings */
 (["])                                         this.begin('qq')
 (['])                                         this.begin('q')
 <qq>([^\\]["])                                this.popState()
 <q>([^\\]['])                                 this.popState()
 <qq,q>(.*)                                    return 'STRING'
 
-/* Arrays and objects. */ 
+/* Arrays and objects. */
 <array,object>[,]                             return 'COMMA'
 <array,object>[;]                             return 'DELIMITER' /*allow multiline*/
-<array,object>[:]                             return 'COLON' 
+<array,object>[:]                             return 'COLON'
 
 /* Final step: gracefully handle EOF, freak out if nothing thus far has matched */
 <<EOF>>                                       return 'EOF'
