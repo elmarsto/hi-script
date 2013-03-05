@@ -1,10 +1,10 @@
-->
-  out =
-    eq: ->
-    neq: ->
-    lte: ->
-    gte: ->
-    gt: ->
-    lt: ->
-    got: ->
-    kin: ->
+props =
+  eq: ->
+  neq: ->
+  lte: ->
+  gte: ->
+  gt: ->
+  lt: ->
+  got: ->
+  kin: ->
+exports <<< props

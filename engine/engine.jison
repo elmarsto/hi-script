@@ -9,9 +9,11 @@
  */
 
 %{
-//   var hi   = require("hi"),
-//       old  = [],
-//       swp  = {};
+   var Hi   = require('hi'),
+       old  = [],
+       swp  = {};
+   debugger;
+   hi = Hi.hi();
 %}
 
 
@@ -45,8 +47,11 @@
 
 %ebnf
 %%
-expr            : forcing  -> console.log('hello world!') //-> hi.stack.push.value($forcing)
-//              | thunk   -> hi.stack.push.thunk($thunk)
+
+program         : expr* delimiter* EOF?
+                ;
+expr            : forcing           -> hi.stack.push.value($forcing)
+                | thunk             -> hi.stack.push.thunk($thunk)
                 ;
 
 /*
@@ -115,11 +120,11 @@ boolean         : BOOLEAN
  *   Thunks
  */
 
-//thunk           : thunk_literal
+thunk           : thunk_literal
 //              | symbol
 //              | composition
 //              | declaration
-//                ;
+                ;
 // symbol       : LVALUE   -> hi.sym[$1]
 //              | GESTALT  -> hi
 //              ;
@@ -141,10 +146,10 @@ boolean         : BOOLEAN
 //              | FILTER     -> hi.just
 //              ;
 
-//thunk_literal : closure
+thunk_literal   : closure
 //              | array
 //              | object
-//              ;
+                ;
 
 //object        : LBRCE (kvpair ((COMMA kvpair)*))? RBRCE -> hi({ sym: [ $kvpair, $kvpair ] });
 //              ;
@@ -152,17 +157,16 @@ boolean         : BOOLEAN
 //              ;
 //array         : LBRKT  expr (COMMA expr)* RBRKT -> hi({ stack: [$expr1,$expr2] });
 //              ;
-//closure       : empty_cl
+closure         : empty_cl
 //              | inline_cl
 //              | multiline_cl
-//              ;
-//empty_cl      : LPARN RPARN   -> hi.mk.closure.empty()
-//              | EMPTY         -> hi.mk.closure.empty()
-//              ;
+                ;
+empty_cl        : LPARN RPARN   -> hi.mk.closure.empty()
+                | EMPTY         -> hi.mk.closure.empty()
+                ;
 //inline_cl     : LPARN  expr+ RPARN -> hi( { queue: [$expr] } );
 //              ;
 //multiline_cl  : LPARN expr*  -> hi = hi.hi( { queue: [$expr] } );
 //              | expr* RPARN  -> hi = hi.bye({ queue: [$expr] } );
 //              ;
-/* EOF */
 %%

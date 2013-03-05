@@ -1,26 +1,22 @@
 
-//SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
-//SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
+SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
+SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
 
-//%x cblk
-//%x q
-//%x qq
-//%s array
-//%s object
+%x cblk
+%x q
+%x qq
+%s array
+%s object
 %%
-
-// First, throw out whitespace.
-//\s+                                             // ignore whitespace
-// Next, throw out comments.
-                                                // ignore  comments
-//"--".*                                          // ignore inline comments
-                                                // ignore block  comments
-//^"---"$                                        this.begin('cblk') // begin  comment blk
-//<cblk>^"---"$                                  this.popState()    // end    comment blk
-//<cblk>.*                                                          // ignore comment blk
-
+----
+\s+                                             {/* ignore whitespace */}
+"--".*                                          {/* ignore inline comments */}
+// ignore block  comments
+^"---"$                                        this.begin('cblk') // begin  comment blk
+<cblk>^"---"$                                  this.popState()    // end    comment blk
+<cblk>.*                                       {/* ignore block comments */}
 // Identify delimiter
-//[\n;]                                           return 'DELIMITER';
+[;\n]                                              return 'DELIMITER';
 
 //// Identify keywords and primitives
 //("->"|[⊃⊇→])                                    return 'IMPLY';

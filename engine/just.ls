@@ -1,9 +1,7 @@
-->
-  out = ->
-  props =
-    just: -> out ...
-    member: ->
-    stack: ->
-    syms: ->
-    swap: ->
-  out <<< props
+props =
+  filter: ->
+  member: ->
+  stack: ->
+  syms: ->
+  swap: ->
+exports <<< props

@@ -1,5 +1,4 @@
-->
-  out =
+props =
    log: ->
    ln:  ->
    pow: ->
@@ -9,3 +8,4 @@
    times: ->
    div: ->
    mod: ->
+exports <<< props
