@@ -45,19 +45,19 @@
 
 %ebnf
 %%
-
-input           : input line | input EOF
-line            : expr delimiter*      -> hi($expr)
-expr            : forcing | thunk
+program         : expr+ EOF            -> hi.bye()
+                ;
+expr            : ( forcing | thunk ) delimiter*  -> hi.apply($1)
+                ;
 
 /*
  *   Forcings
  */
-/* TODO cleanup */
 forcing         : operator | literal
-
+                ;
 operator        : unary (expr?)           -> $unary($expr)
                 | (expr?) binary (expr?)  -> $binary($expr1,$expr2)
+                ;
 unary           : FORCE       -> hi.force
                 | FORCEALL    -> hi.forcer
                 | RECV        -> hi.recv
@@ -67,6 +67,7 @@ unary           : FORCE       -> hi.force
                 | PEEK        -> hi.stack.peek
                 | DROP        -> hi.stack.drop
                 | NOT         -> hi.logic.n
+                ;
 binary          : EQ          -> hi.check.eq
                 | NEQ         -> hi.check.neq
                 | LT          -> hi.check.lt
@@ -91,28 +92,42 @@ binary          : EQ          -> hi.check.eq
                 | MODULO      -> hi.math.mod
                 | JUST_MEMBER -> hi.just.member
                 | FORCEWITH   -> function(x,y) { return hi.compose(y,x); }  /* recall x?y == y:x */
+                ;
 
-literal         : number | boolean | string
+literal         : number
+                | boolean
+                | string
+                ;
 number          : '-' number %prec UMINUS -> hi.math.uminus($2)
                 | CONSTANT -> hi(hi.core.constant[$1])
                 | NUMBER   -> hi($1)
+                ;
 boolean         : BOOLEAN  -> hi($1)
+                ;
 string          : STRING   -> hi($1)
+                ;
 
 
 /*
  *   Thunks
  */
 
-thunk           : symbol | declaration | composition | thunk_literal
+thunk           : symbol
+                | declaration
+                | composition
+                | thunk_literal
+                ;
 symbol          : LVALUE   -> hi.sym[$1]
                 | GESTALT  -> hi
+                ;
 
 /* remember ASSIGN and DECLARE differ only in that DECLARE is right associative */
-declaration     : LVALUE (ASSIGN|DECLARE) (expr?) -> hi.sym[$1] = (!!$3) ? hi.sym[$1] : {};
+declaration     : LVALUE (ASSIGN|DECLARE) (expr?) -> hi.sym[$1] = (!!$3) ? hi.sym[$1] : {}
+                ;
 
 composition     : (thunk?) composer thunk -> $composer($1,$3)
                 | composer (thunk?)       -> $composer($2)
+                ;
 
 composer        : COMPOSE    -> hi.compose
                 | IMPLY      -> hi.imply
@@ -121,18 +136,30 @@ composer        : COMPOSE    -> hi.compose
                 | JUST_STACK -> hi.just.syms
                 | JUST_SYMS  -> hi.just.stack
                 | FILTER     -> hi.just
+                ;
 
-thunk_literal   : object | array | closure
-object          : LBRCE (kvpair ((COMMA kvpair)*))? RBRCE           -> hi.apply({ sym: { $kvpair, $kvpair } });
+thunk_literal   : object
+                | array
+                | closure
+                ;
+
+
+object          : LBRCE (kvpair ((COMMA kvpair)*))? RBRCE -> hi.apply({ sym: [ $kvpair, $kvpair ] });
+                ;
 kvpair          : expr COLON expr
-array           : LBRKT  expr (COMMA expr)* RBRKT                   -> hi.apply({ stack: [$expr1,$expr2] });
-closure         : empty-cl | inline-cl | multiline-cl
-empty-cl        : ( LPARN RPARN | EMPTY )                                      -> hi.apply({});
-inline-cl       : LPARN  expr+ RPARN                                           -> hi.apply( { queue: [$expr] } );
-multiline-cl    : LPARN expr*                                                  -> hi = hi.hi( { queue: [$expr] } );
-                | expr* RPARN                                                  -> hi = hi.bye({ queue: [$expr] } );
-
-
-
+                ;
+array           : LBRKT  expr (COMMA expr)* RBRKT -> hi.apply({ stack: [$expr1,$expr2] });
+                ;
+closure         : empty_cl
+                | inline_cl
+                | multiline_cl
+                ;
+empty_cl        : ( LPARN RPARN | EMPTY ) -> hi.apply({})
+                ;
+inline_cl       : LPARN  expr+ RPARN -> hi.apply( { queue: [$expr] } );
+                ;
+multiline_cl    : LPARN expr*  -> hi = hi.hi( { queue: [$expr] } );
+                | expr* RPARN  -> hi = hi.bye({ queue: [$expr] } );
+                ;
 /* EOF */
 %%

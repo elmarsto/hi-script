@@ -1,34 +1,33 @@
 
 SYMN  [^,;:\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]]
-SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digits and hyphen */
+SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-]
 
-
-%x cblk /* comment block */
-%x q /* single-quoted string literal */
-%x qq /* double-quoted string literal */
+%x cblk
+%x q
+%x qq
 %s array
 %s object
 %%
 
-/* First, throw out whitespace. */
-\s+                                             /* ignore whitespace */
-/* Next, throw out comments. */
-                                                /* ignore  comments */
-"--".*                                          /* ignore inline comments */
-                                                /* ignore block  comments */
-^"---"$                                        this.begin('cblk') /* begin  comment blk*/
-<cblk>^"---"$                                  this.popState()    /* end    comment blk*/
-<cblk>.*                                                          /* ignore comment blk*/
+// First, throw out whitespace.
+\s+                                             // ignore whitespace
+// Next, throw out comments.
+                                                // ignore  comments
+"--".*                                          // ignore inline comments
+                                                // ignore block  comments
+^"---"$                                        this.begin('cblk') // begin  comment blk
+<cblk>^"---"$                                  this.popState()    // end    comment blk
+<cblk>.*                                                          // ignore comment blk
 
-/* Identify delimiter */
+// Identify delimiter
 [\n;]                                           return 'DELIMITER'
 
-/* Identify keywords and primitives */
+// Identify keywords and primitives
 ("->"|[⊃⊇→])                                    return 'IMPLY'
 (":="|[≔⊢])                                     return 'DECLARE'
 [=]                                             return 'ASSIGN'
-        /* Remember, 'like' works by taking an example atom and casting its
-         * first argument to the same type as the example. e.g.  "1" like 0 -- returns 1 */
+// Remember, 'like' works by taking an example atom and casting its
+// first argument to the same type as the example. e.g.  "1" like 0 -- returns 1
 ("like"|[↝])                                    return 'LIKE'
 [!]                                             return 'FORCE'
 ("!!"|[⚡])                                      return 'FORCEALL'
@@ -49,7 +48,7 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 
 ("times"|[×·])                                  return 'TIMES'
 ("div"|[÷])                                     return 'DIVIDES'
-[+]                                             return 'PLUS'     /* also string concat */
+[+]                                             return 'PLUS'     // also string concat
 [-]                                             return 'MINUS'
 ("pow"|[^])                                     return 'POW'
 ("root"|[√])                                    return 'ROOT'
@@ -71,14 +70,14 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 ("||"|[i]?"or"|[∩∧])                            return 'IOR'
 ("xor"|[⨁⊻])                                    return 'XOR'
 
-/* Identify special names */
+// Identify special names
 [$ß]                                          return 'GESTALT'
-("..."  |[…])                                 return 'ELLIPSIS'
+("..."|[…])                                   return 'ELLIPSIS'
 ("{}"|"()"|[∅])                               return 'EMPTY'
-/*[ℯπ∞ιφ]                                       return 'CONSTANT' */
+//[ℯπ∞ιφ]                                     return 'CONSTANT'
 [ℯπφ]                                         return 'CONSTANT'
 
-/* Identify structuring tokens */
+// Identify structuring tokens
 
 "("                                            return 'LPARN'
 ")"                                            return 'RPARN'
@@ -88,36 +87,36 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 "}"                                            return 'RBRCE'
 
 
-/* Whew! on to lexing of lvalues. */
+// Whew! on to lexing of lvalues.
 
 {SYM1}({SYMN}*)\b                             return 'LVALUE'
 
 
-/* And now for the lexing of datatypes. */
+// And now for the lexing of datatypes.
 
 
-/* Booleans */
-("false" | "true" |[⊥⊤])                      return 'BOOLEAN'
+// Booleans
+("false"|"true"|[⊥⊤])                      return 'BOOLEAN'
 
 
-/* Identify Floats and Integers */
-                      /* FIXME this is a mess. Simplify? How? Irreducible
-                       * complexity? Explicitness vs noise? */
+// Identify Floats and Integers
+// FIXME this is a mess. Simplify? How? Irreducible
+// complexity? Explicitness vs noise?
 ([1-9]([0-9]*)|"0")(("."([0-9]+)(([eE]([-+]?)([0-9]+))?))?)\b   return 'NUMBER'
 
-/* Identify Strings */
+// Identify Strings
 (["])                                         this.begin('qq')
 (['])                                         this.begin('q')
 <qq>([^\\]["])                                this.popState()
 <q>([^\\]['])                                 this.popState()
 <qq,q>(.*)                                    return 'STRING'
 
-/* Arrays and objects. */
+// Arrays and objects.
 <array,object>[,]                             return 'COMMA'
-<array,object>[;]                             return 'DELIMITER' /*allow multiline*/
+<array,object>[;]                             return 'DELIMITER' //allow multiline
 <array,object>[:]                             return 'COLON'
 
-/* Final step: gracefully handle EOF, freak out if nothing thus far has matched */
+// Final step: gracefully handle EOF, freak out if nothing thus far has matched
 <<EOF>>                                       return 'EOF'
 
                                               return 'INVALID'
