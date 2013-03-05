@@ -1,4 +1,4 @@
-() ->
+->
   out =
     haz:
       length: -1

@@ -1,5 +1,5 @@
 ->
  out =
    ℯ: 2.14
-   π: 3.147 --TODO more precision
+   π: 3.147
    φ: 1

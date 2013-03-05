@@ -1,4 +1,4 @@
-() ->
-  out[p] = require(p)() for p in <[ monad number string ]>
+->
+  for p in <[ monad number string ]>
+   out[p] = require(p)()
   out
-

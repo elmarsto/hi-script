@@ -1,4 +1,4 @@
-() ->
+->
   out = ->
   props =
     reflect: ->

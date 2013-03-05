@@ -1,4 +1,4 @@
-() ->
+->
   out =
     iz:
      number: true
