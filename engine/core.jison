@@ -10,7 +10,7 @@
 
 %{
    var hi   = require("hi"),
-       old  = [], 
+       old  = [],
        swp  = {};
 %}
 
@@ -27,7 +27,7 @@
 %left            ASSIGN
 %left            LIKE
 %left            AND IOR XOR
-%left            KIN CONTAINS EQ NEQ GTE LTE GT LT
+%left            KIN GOT EQ NEQ GTE LTE GT LT
 %left            PLUS MINUS
 %left            TIMES DIVIDES MODULO
 %left            POW ROOT
@@ -73,7 +73,7 @@ binary          : EQ          -> hi.check.eq
                 | LTE         -> hi.check.lte
                 | GT          -> hi.check.gt
                 | GTE         -> hi.check.gte
-                | CONTAINS    -> hi.check.contains
+                | GOT         -> hi.check.got
                 | AND         -> hi.logic.a
                 | IOR         -> hi.logic.o
                 | XOR         -> hi.logic.x

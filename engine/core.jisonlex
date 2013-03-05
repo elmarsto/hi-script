@@ -64,7 +64,7 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 (">="|">=="|[≥])                                return 'GTE'
 ("=="|"==="|[≃])                                return 'EQ'
 ("!="|"!=="|[≄])                                return 'NEQ'
-("contains"|[∋∍])                               return 'CONTAINS' /* works on substrings too */
+("got"|[∋∍])                                    return 'GOT'
 
 ("not"|[¬~])                                    return 'NOT'
 ("&&"|"and"|[∪∨])                               return 'AND'
@@ -75,7 +75,8 @@ SYM1  [^.,;:/\d\\^_~!@#$%^&*()<>|?!"`'=\s{}\[\]-] /* same as SYMN, but with digi
 [$ß]                                          return 'GESTALT'
 ("..."  |[…])                                 return 'ELLIPSIS'
 ("{}"|"()"|[∅])                               return 'EMPTY'
-[ℯπ∞ιφ]                                       return 'CONSTANT'
+/*[ℯπ∞ιφ]                                       return 'CONSTANT' */
+[ℯπφ]                                         return 'CONSTANT'
 
 /* Identify structuring tokens */
 
